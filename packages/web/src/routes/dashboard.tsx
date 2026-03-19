@@ -1,17 +1,13 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { Button, Card, CardContent, Input, Label } from "../components/ui";
-import { apiFetch } from "../lib/api";
 import { useSession } from "../lib/auth";
+import { rpcClient } from "../lib/rpc.client";
 
-type Project = {
-  id: string;
-  ownerId: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
+const projectsApi = rpcClient.api.projects;
+type Project = Awaited<ReturnType<typeof parseResponse<typeof projectsApi.$get>>>[number];
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -22,25 +18,27 @@ function DashboardPage() {
   const [name, setName] = useState("");
   const queryClient = useQueryClient();
 
-  const canFetch = useMemo(() => Boolean(session && !isPending), [session, isPending]);
+  const canFetch = Boolean(session && !isPending);
 
   const projectsQuery = useQuery({
     queryKey: ["projects"],
-    queryFn: () => apiFetch<Project[]>("/api/projects"),
+    queryFn: () => parseResponse(projectsApi.$get()),
     enabled: canFetch,
   });
 
   const createMutation = useMutation({
     mutationFn: (payload: { name: string }) =>
-      apiFetch<Project>("/api/projects", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    onSuccess: (created) => {
+      parseResponse(projectsApi.$post({
+        json: payload,
+      })),
+    onSuccess: async (created) => {
       queryClient.setQueryData<Project[]>(["projects"], (prev) => [
         created,
         ...(prev ?? []),
       ]);
+      await queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      }),
       setName("");
     },
   });

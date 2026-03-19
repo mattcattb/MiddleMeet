@@ -6,7 +6,7 @@ Boilerplate monorepo with a Bun + Hono server, Better Auth (Drizzle adapter), an
 
 - **Server**: Bun + Hono API with Better Auth and Drizzle ORM (Postgres)
 - **Web**: React + TanStack Router + Tailwind
-- **Devcontainer**: Postgres by default, Redis optional
+- **Local infra**: one Postgres container via Docker Compose
 
 ## Structure
 
@@ -20,24 +20,37 @@ packages/
 
 1. Copy envs:
 
-```
+```bash
 cp .env.example .env
-cp packages/server/.env.example packages/server/.env
 ```
 
-2. Install dependencies:
+2. Start Postgres:
 
+```bash
+docker compose up -d
 ```
+
+3. Install dependencies:
+
+```bash
 bun install
 ```
 
-3. Start dev servers:
+4. Run Drizzle migrations:
 
+```bash
+bun run db:migrate
 ```
+
+5. Start dev servers:
+
+```bash
 bun run dev
 ```
 
 The server runs on `http://localhost:3000` and the web app on `http://localhost:5173`.
+
+`bun run dev` reads the shared root [`.env`](/Users/matthewboughton/Desktop/matty-stack/.env), and Vite is configured to load the same file for the web app.
 
 ## Auth Routes
 
@@ -55,20 +68,13 @@ Authenticated routes (require session cookie):
 - `GET /api/projects` - list projects
 - `POST /api/projects` - create project `{ "name": "My Project" }`
 
-## Devcontainer Notes
-
-- Postgres runs on port `5432`.
-- Redis is available via the optional compose profile:
-
-```
-COMPOSE_PROFILES=redis
-```
-
 ## Scripts
 
 - `bun run dev` - run all dev servers
 - `bun run dev:server` - server only
 - `bun run dev:web` - web only
+- `bun run infra:up` - start local Postgres
+- `bun run infra:down` - stop local Postgres
 - `bun run db:generate` - Drizzle generate
 - `bun run db:migrate` - Drizzle migrate
 - `bun run db:studio` - Drizzle studio
