@@ -1,13 +1,13 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { parseResponse, type InferResponseType } from "hono/client";
 import { Button, Card, CardContent, Input, Label } from "../components/ui";
 import { useSession } from "../lib/auth";
 import { rpcClient } from "../lib/rpc.client";
 
-const projectsApi = rpcClient.api.projects;
-type Project = Awaited<ReturnType<typeof parseResponse<typeof projectsApi.$get>>>[number];
+const projectsApi = rpcClient.projects;
+type Project = InferResponseType<typeof projectsApi.$get>[number];
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,

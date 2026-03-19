@@ -1,7 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { createRouter } from "../common/hono";
-import { createProjectSchema } from "./projects.schema";
-import { createProject, listProjects } from "./projects.service";
+import { createProject, createProjectSchema, listProjects } from "./projects.service";
 
 export const projectsController = createRouter()
   .get("/", async (c) => {

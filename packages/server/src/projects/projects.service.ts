@@ -1,6 +1,13 @@
 import { desc, eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../db";
 import { project } from "../db/schema";
+
+export const createProjectSchema = z.object({
+  name: z.string().min(1).max(120),
+});
+
+export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 
 export const listProjects = async (ownerId: string) =>
   db
