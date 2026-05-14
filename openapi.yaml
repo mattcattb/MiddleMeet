@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Map Go API
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags:
+        - health
+      responses:
+        "200":
+          description: Server health.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /api/meeting/compare:
+    post:
+      operationId: compareMeeting
+      tags:
+        - meeting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompareMeetingRequest"
+      responses:
+        "200":
+          description: Meeting destination comparison results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompareMeetingResponse"
+        "400":
+          description: Invalid request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Coord:
+      type: object
+      additionalProperties: false
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+    Location:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - address
+        - coord
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        coord:
+          $ref: "#/components/schemas/Coord"
+    RouteEstimate:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - distanceMeters
+        - durationSeconds
+      properties:
+        from:
+          $ref: "#/components/schemas/Location"
+        to:
+          $ref: "#/components/schemas/Location"
+        distanceMeters:
+          type: integer
+          format: int32
+        durationSeconds:
+          type: integer
+          format: int32
+    MeetingOption:
+      type: object
+      additionalProperties: false
+      required:
+        - destination
+        - fromA
+        - fromB
+        - totalDurationSeconds
+        - durationDifferenceSeconds
+        - maxDurationSeconds
+      properties:
+        destination:
+          $ref: "#/components/schemas/Location"
+        fromA:
+          $ref: "#/components/schemas/RouteEstimate"
+        fromB:
+          $ref: "#/components/schemas/RouteEstimate"
+        totalDurationSeconds:
+          type: integer
+          format: int32
+        durationDifferenceSeconds:
+          type: integer
+          format: int32
+        maxDurationSeconds:
+          type: integer
+          format: int32
+    CompareMeetingRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - locationA
+        - locationB
+        - interestAreas
+      properties:
+        locationA:
+          $ref: "#/components/schemas/Location"
+        locationB:
+          $ref: "#/components/schemas/Location"
+        interestAreas:
+          type: array
+          items:
+            $ref: "#/components/schemas/Location"
+    CompareMeetingResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/MeetingOption"
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+        - code
+        - details
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: string
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - ok
+        - message
+      properties:
+        ok:
+          type: boolean
+        message:
+          type: string

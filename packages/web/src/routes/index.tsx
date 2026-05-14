@@ -1,55 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button, Card, CardContent } from "../components/ui";
-import { useSession } from "../lib/auth";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
 function HomePage() {
-  const { data: session, isPending } = useSession();
-
   return (
     <div className="space-y-10">
       <section className="grid gap-6 lg:grid-cols-[1.3fr_1fr] lg:items-center">
         <div className="space-y-4">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            matty-stack starter
+            Go maps learning app
           </p>
           <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-            Launch with Better Auth, Drizzle, and a clean, reusable web +
-            server setup.
+            Build toward meet-in-the-middle plans and roadtrip coordination.
           </h1>
           <p className="text-base text-muted-foreground md:text-lg">
-            This boilerplate keeps the essentials: Bun + Hono API, Drizzle
-            schema, Better Auth with the Drizzle adapter, and a lightweight
-            React app.
+            The backend is now a small Go HTTP server with one example endpoint.
+            Add geocoding, places, and drive-time routes yourself as you learn the APIs.
           </p>
           <div className="flex flex-wrap gap-3">
-            {isPending ? null : session ? (
-              <Link to="/dashboard">
-                <Button effect="glow">Go to dashboard</Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/signup">
-                  <Button effect="glow">Create account</Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="outline">Sign in</Button>
-                </Link>
-              </>
-            )}
+            <Link to="/dashboard">
+              <Button effect="glow">Open API playground</Button>
+            </Link>
           </div>
         </div>
         <Card className="enter-rise">
           <CardContent className="space-y-4 p-6">
-            <div className="text-sm text-muted-foreground">Stack overview</div>
+            <div className="text-sm text-muted-foreground">Backend focus</div>
             <ul className="space-y-2 text-sm">
-              <li>Server: Bun + Hono</li>
-              <li>Database: Postgres + Drizzle ORM</li>
-              <li>Auth: Better Auth + Drizzle adapter</li>
-              <li>Web: React + TanStack Router + Tailwind</li>
+              <li>Server: Go standard library HTTP</li>
+              <li>First exercise: add geocoding yourself</li>
+              <li>Next idea: compare travel times from two origins</li>
+              <li>Later: saved trips, friend invites, roadtrip stops</li>
             </ul>
           </CardContent>
         </Card>

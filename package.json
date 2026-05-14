@@ -1,15 +1,13 @@
 {
-  "name": "matty-stack",
+  "name": "map-go",
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
-    "dev": "bun --env-file=.env run --filter '*' dev",
-    "dev:server": "bun --env-file=.env run --filter @matty-stack/server dev",
+    "dev": "bun --env-file=.env run dev:web",
+    "dev:server": "cd packages/server && go run ./cmd/api",
     "dev:web": "bun --env-file=.env run --filter @matty-stack/web dev",
-    "build": "bun --env-file=.env run --filter '*' build",
-    "db:generate": "bun --env-file=.env run --filter @matty-stack/server db:generate",
-    "db:migrate": "bun --env-file=.env run --filter @matty-stack/server db:migrate",
-    "db:studio": "bun --env-file=.env run --filter @matty-stack/server db:studio",
+    "build": "bun --env-file=.env run --filter @matty-stack/web build",
+    "openapi:gen": "cd packages/web && bunx openapi-typescript ../../openapi.yaml -o src/gen/openapi.ts",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down"
   }
