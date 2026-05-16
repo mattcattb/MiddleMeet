@@ -10,6 +10,8 @@ import (
 type Client interface {
 	location.Finder
 	meeting.RouteEstimator
+	meeting.AreaEstimator
+	meeting.PlaceFinder
 }
 
 type CachedClient struct {
@@ -42,4 +44,12 @@ func (c *CachedClient) EstimateRoute(from geo.Location, to geo.Location) (meetin
 
 func (c *CachedClient) EstimateRouteMatrix(origins []geo.Location, destinations []geo.Location) (meeting.RouteMatrix, error) {
 	return c.next.EstimateRouteMatrix(origins, destinations)
+}
+
+func (c *CachedClient) BuildIsochrone(origin geo.Location, maxDurationSeconds int) (geo.Polygon, error) {
+	return c.next.BuildIsochrone(origin, maxDurationSeconds)
+}
+
+func (c *CachedClient) SearchPlaces(query string, near geo.Coord, radiusMeters int) ([]geo.Location, error) {
+	return c.next.SearchPlaces(query, near, radiusMeters)
 }

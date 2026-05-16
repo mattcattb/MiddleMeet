@@ -11,6 +11,18 @@ type Location struct {
 	Coord   Coord  `json:"coord"`
 }
 
+type BBox struct {
+	MinLat float64 `json:"minLat"`
+	MinLng float64 `json:"minLng"`
+	MaxLat float64 `json:"maxLat"`
+	MaxLng float64 `json:"maxLng"`
+}
+
+type Polygon struct {
+	Type        string        `json:"type"`        // "Polygon"
+	Coordinates [][][]float64 `json:"coordinates"` // GeoJSON lon/lat order
+}
+
 type RouteGeometry struct {
 	Polyline string  `json:"polyline,omitempty"`
 	Points   []Coord `json:"points,omitempty"`

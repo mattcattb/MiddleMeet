@@ -24,6 +24,8 @@ func NewServer(app Application) http.Handler {
 
 	mux.HandleFunc("POST /api/meeting/estimate", app.EstimateMeetingHandler)
 	mux.HandleFunc("POST /api/meeting/routes", app.MeetingRoutesHandler)
+	mux.HandleFunc("POST /api/meeting/area", app.MeetingAreaHandler)
+	mux.HandleFunc("POST /api/meeting/destinations/search", app.SearchMeetingDestinationsHandler)
 
 	mux.HandleFunc("GET /api/locations/search", app.SearchLocationsHandler)
 	mux.HandleFunc("GET /api/locations/autocomplete", app.AutocompleteLocationsHandler)

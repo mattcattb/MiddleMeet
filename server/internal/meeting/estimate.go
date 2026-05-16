@@ -7,11 +7,15 @@ import (
 
 type Planner struct {
 	routes RouteEstimator
+	areas  AreaEstimator
+	places PlaceFinder
 }
 
-func NewPlanner(routes RouteEstimator) *Planner {
+func NewPlanner(routes RouteEstimator, areas AreaEstimator, places PlaceFinder) *Planner {
 	return &Planner{
 		routes: routes,
+		areas:  areas,
+		places: places,
 	}
 }
 

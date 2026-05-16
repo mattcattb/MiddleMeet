@@ -30,7 +30,7 @@ func main() {
 
 	openrouteClient := openroute.NewClient(openRouteApiKey)
 
-	meetingPlanner := meeting.NewPlanner(openrouteClient)
+	meetingPlanner := meeting.NewPlanner(openrouteClient, openrouteClient, openrouteClient)
 	locationService := location.NewService(openrouteClient)
 
 	application := httpapi.NewServer(httpapi.Application{

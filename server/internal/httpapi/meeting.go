@@ -12,6 +12,11 @@ type MeetingRequest struct {
 	Destination  geo.Location          `json:"destination"`
 }
 
+type MeetingAreaRequest struct {
+	Participants []meeting.Participant      `json:"participants"`
+	Constraints  meeting.MeetingConstraints `json:"constraints"`
+}
+
 func (app *Application) EstimateMeetingHandler(w http.ResponseWriter, r *http.Request) {
 	req, ok := decodeMeetingRequest(w, r)
 	if !ok {
@@ -42,10 +47,39 @@ func (app *Application) MeetingRoutesHandler(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, resp)
 }
 
+func (app *Application) MeetingAreaHandler(w http.ResponseWriter, r *http.Request) {
+	var req MeetingAreaRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	resp, err := app.MeetingPlanner.BuildMeetingArea(req.Participants, req.Constraints)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "meeting_area_failed", "Meeting area failed", err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (app *Application) SearchMeetingDestinationsHandler(w http.ResponseWriter, r *http.Request) {
+	var req meeting.DestinationSearchRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	resp, err := app.MeetingPlanner.SearchDestinations(req)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "destination_search_failed", "Destination search failed", err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func decodeMeetingRequest(w http.ResponseWriter, r *http.Request) (MeetingRequest, bool) {
 	var req MeetingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid_json", "Invalid json for request", err.Error())
+	if !decodeJSON(w, r, &req) {
 		return MeetingRequest{}, false
 	}
 
@@ -55,4 +89,13 @@ func decodeMeetingRequest(w http.ResponseWriter, r *http.Request) (MeetingReques
 	}
 
 	return req, true
+}
+
+func decodeJSON(w http.ResponseWriter, r *http.Request, out any) bool {
+	if err := json.NewDecoder(r.Body).Decode(out); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid_json", "Invalid json for request", err.Error())
+		return false
+	}
+
+	return true
 }

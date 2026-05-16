@@ -66,6 +66,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/meeting/area:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingAreaRequest"
+      responses:
+        "200":
+          description: Reachable meeting areas for participants.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingArea"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/meeting/destinations/search:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DestinationSearchRequest"
+      responses:
+        "200":
+          description: Ranked meetup destinations matching the query and constraints.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DestinationSearchResponse"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/locations/search:
     get:
       parameters:
@@ -162,6 +216,38 @@ components:
         lng:
           type: number
           format: double
+    BBox:
+      type: object
+      required: [minLat, minLng, maxLat, maxLng]
+      properties:
+        minLat:
+          type: number
+          format: double
+        minLng:
+          type: number
+          format: double
+        maxLat:
+          type: number
+          format: double
+        maxLng:
+          type: number
+          format: double
+    Polygon:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+                format: double
     Location:
       type: object
       required: [name, address, coord]
@@ -180,6 +266,18 @@ components:
           type: string
         location:
           $ref: "#/components/schemas/Location"
+    MeetingConstraints:
+      type: object
+      properties:
+        maxDurationSeconds:
+          type: integer
+          format: int32
+        radiusMeters:
+          type: integer
+          format: int32
+        sortBy:
+          type: string
+          enum: [fairest, fastest, lowestMaxTime]
     ParticipantEstimate:
       type: object
       required: [participantName, location, distanceMeters, durationSeconds]
@@ -216,6 +314,49 @@ components:
         maxDurationSeconds:
           type: integer
           format: int32
+    ParticipantArea:
+      type: object
+      required: [participantName, area]
+      properties:
+        participantName:
+          type: string
+        area:
+          $ref: "#/components/schemas/Polygon"
+    MeetingArea:
+      type: object
+      required: [participants]
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipantArea"
+        intersection:
+          $ref: "#/components/schemas/Polygon"
+        bbox:
+          $ref: "#/components/schemas/BBox"
+    DestinationCandidate:
+      type: object
+      required: [location, estimate, score]
+      properties:
+        location:
+          $ref: "#/components/schemas/Location"
+        estimate:
+          $ref: "#/components/schemas/MeetingEstimate"
+        score:
+          type: integer
+          format: int32
+    DestinationSearchResponse:
+      type: object
+      required: [query, destinations]
+      properties:
+        query:
+          type: string
+        area:
+          $ref: "#/components/schemas/MeetingArea"
+        destinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationCandidate"
     MeetingRoutes:
       type: object
       required: [destination, routes]
@@ -304,6 +445,31 @@ components:
             $ref: "#/components/schemas/Participant"
         destination:
           $ref: "#/components/schemas/Location"
+    MeetingAreaRequest:
+      type: object
+      required: [participants, constraints]
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Participant"
+        constraints:
+          $ref: "#/components/schemas/MeetingConstraints"
+    DestinationSearchRequest:
+      type: object
+      required: [participants, query, constraints]
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Participant"
+        query:
+          type: string
+        constraints:
+          $ref: "#/components/schemas/MeetingConstraints"
+        limit:
+          type: integer
+          format: int32
     LocationList:
       type: array
       items:

@@ -19,3 +19,11 @@ func (c *GoogleClient) EstimateRoute(from geo.Location, to geo.Location) (meetin
 func (c *GoogleClient) SearchLocations(query string, near geo.Coord, radiusMeters int) ([]geo.Location, error) {
 	return nil, fmt.Errorf("google maps location search is not implemented")
 }
+
+func (c *GoogleClient) BuildIsochrone(origin geo.Location, maxDurationSeconds int) (geo.Polygon, error) {
+	return geo.Polygon{}, fmt.Errorf("google maps isochrone search is not implemented")
+}
+
+func (c *GoogleClient) SearchPlaces(query string, near geo.Coord, radiusMeters int) ([]geo.Location, error) {
+	return nil, fmt.Errorf("google maps places search is not implemented")
+}

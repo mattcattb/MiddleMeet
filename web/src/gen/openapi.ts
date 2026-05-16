@@ -153,6 +153,120 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meeting/area": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MeetingAreaRequest"];
+                };
+            };
+            responses: {
+                /** @description Reachable meeting areas for participants. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetingArea"];
+                    };
+                };
+                /** @description Invalid request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meeting/destinations/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DestinationSearchRequest"];
+                };
+            };
+            responses: {
+                /** @description Ranked meetup destinations matching the query and constraints. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DestinationSearchResponse"];
+                    };
+                };
+                /** @description Invalid request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/locations/search": {
         parameters: {
             query?: never;
@@ -307,6 +421,21 @@ export interface components {
             /** Format: double */
             lng: number;
         };
+        BBox: {
+            /** Format: double */
+            minLat: number;
+            /** Format: double */
+            minLng: number;
+            /** Format: double */
+            maxLat: number;
+            /** Format: double */
+            maxLng: number;
+        };
+        Polygon: {
+            /** @enum {string} */
+            type: "Polygon";
+            coordinates: number[][][];
+        };
         Location: {
             name: string;
             address: string;
@@ -315,6 +444,14 @@ export interface components {
         Participant: {
             name: string;
             location: components["schemas"]["Location"];
+        };
+        MeetingConstraints: {
+            /** Format: int32 */
+            maxDurationSeconds?: number;
+            /** Format: int32 */
+            radiusMeters?: number;
+            /** @enum {string} */
+            sortBy?: "fairest" | "fastest" | "lowestMaxTime";
         };
         ParticipantEstimate: {
             participantName: string;
@@ -335,6 +472,26 @@ export interface components {
             durationSpreadSeconds: number;
             /** Format: int32 */
             maxDurationSeconds: number;
+        };
+        ParticipantArea: {
+            participantName: string;
+            area: components["schemas"]["Polygon"];
+        };
+        MeetingArea: {
+            participants: components["schemas"]["ParticipantArea"][];
+            intersection?: components["schemas"]["Polygon"];
+            bbox?: components["schemas"]["BBox"];
+        };
+        DestinationCandidate: {
+            location: components["schemas"]["Location"];
+            estimate: components["schemas"]["MeetingEstimate"];
+            /** Format: int32 */
+            score: number;
+        };
+        DestinationSearchResponse: {
+            query: string;
+            area?: components["schemas"]["MeetingArea"];
+            destinations: components["schemas"]["DestinationCandidate"][];
         };
         MeetingRoutes: {
             destination: components["schemas"]["Location"];
@@ -375,6 +532,17 @@ export interface components {
         MeetingRequest: {
             participants: components["schemas"]["Participant"][];
             destination: components["schemas"]["Location"];
+        };
+        MeetingAreaRequest: {
+            participants: components["schemas"]["Participant"][];
+            constraints: components["schemas"]["MeetingConstraints"];
+        };
+        DestinationSearchRequest: {
+            participants: components["schemas"]["Participant"][];
+            query: string;
+            constraints: components["schemas"]["MeetingConstraints"];
+            /** Format: int32 */
+            limit?: number;
         };
         LocationList: components["schemas"]["Location"][];
         ErrorResponse: {
