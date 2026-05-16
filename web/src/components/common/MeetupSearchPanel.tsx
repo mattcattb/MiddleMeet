@@ -10,13 +10,16 @@ export function MeetupSearchPanel({
   sortBy,
   showMeetingArea,
   canSearchDestinations,
+  canFindMidpoint,
   searchingDestinations,
+  findingMidpoint,
   onDestinationQueryChange,
   onMaxDurationMinutesChange,
   onSearchRadiusMetersChange,
   onSortByChange,
   onShowMeetingAreaChange,
   onDestinationSearch,
+  onFindMidpoint,
 }: {
   destinationQuery: string;
   maxDurationMinutes: number;
@@ -24,17 +27,32 @@ export function MeetupSearchPanel({
   sortBy: SortBy;
   showMeetingArea: boolean;
   canSearchDestinations: boolean;
+  canFindMidpoint: boolean;
   searchingDestinations: boolean;
+  findingMidpoint: boolean;
   onDestinationQueryChange: (query: string) => void;
   onMaxDurationMinutesChange: (minutes: number) => void;
   onSearchRadiusMetersChange: (meters: number) => void;
   onSortByChange: (sortBy: SortBy) => void;
   onShowMeetingAreaChange: (show: boolean) => void;
   onDestinationSearch: () => void;
+  onFindMidpoint: () => void;
 }) {
   return (
     <section className="space-y-3 border-t border-border pt-4">
-      <div className="text-sm font-medium">Find meetup spots</div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-sm font-medium">Find meetup spots</div>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="h-8 shrink-0 px-3"
+          onClick={onFindMidpoint}
+          disabled={!canFindMidpoint || findingMidpoint}
+        >
+          {findingMidpoint ? "Solving" : "Midpoint"}
+        </Button>
+      </div>
       <div className="flex gap-2">
         <input
           className="h-10 min-w-0 flex-1 border border-border bg-background px-3 text-sm outline-none focus:border-primary"

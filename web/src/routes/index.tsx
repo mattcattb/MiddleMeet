@@ -110,6 +110,20 @@ function HomePage() {
     },
   });
 
+  const midpointMutation = useMutation({
+    mutationFn: async (request: components["schemas"]["MeetingAreaRequest"]) => {
+      const { data, error } = await openAPIClient.POST("/api/meeting/midpoint", {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.error);
+      }
+
+      return data;
+    },
+  });
+
   const nearbyDestinationSearchMutation = useMutation({
     mutationFn: async (near: Location["coord"]) => {
       const query = destinationQuery.trim();
@@ -166,6 +180,7 @@ function HomePage() {
     resetEstimate();
     destinationSearchMutation.reset();
     nearbyDestinationSearchMutation.reset();
+    midpointMutation.reset();
   }
 
   function resetEstimate() {
@@ -235,6 +250,7 @@ function HomePage() {
     const result = await destinationSearchMutation.mutateAsync(request);
     resetEstimate();
     nearbyDestinationSearchMutation.reset();
+    midpointMutation.reset();
 
     if (showMeetingArea) {
       meetingAreaMutation.mutate({
@@ -243,6 +259,20 @@ function HomePage() {
       });
     }
 
+    return result;
+  }
+
+  async function findMidpoint() {
+    const constraints = meetingConstraints(maxDurationMinutes, searchRadiusMeters, sortBy);
+    const result = await midpointMutation.mutateAsync({
+      participants: meetingParticipants(participants),
+      constraints,
+    });
+
+    resetEstimate();
+    destinationSearchMutation.reset();
+    nearbyDestinationSearchMutation.reset();
+    setMapLayer("areas", showMeetingArea);
     return result;
   }
 
@@ -332,43 +362,59 @@ function HomePage() {
         participants={participants}
         searchCenter={searchCenter}
         meetingAreaError={meetingAreaMutation.error?.message}
-        destinationSearchError={destinationSearchMutation.error?.message ?? nearbyDestinationSearchMutation.error?.message}
+        destinationSearchError={
+          midpointMutation.error?.message ??
+          destinationSearchMutation.error?.message ??
+          nearbyDestinationSearchMutation.error?.message
+        }
         destinationQuery={destinationQuery}
         maxDurationMinutes={maxDurationMinutes}
         searchRadiusMeters={searchRadiusMeters}
         sortBy={sortBy}
         showMeetingArea={showMeetingArea}
-        destinationResults={nearbyDestinationSearchMutation.data ?? destinationSearchMutation.data?.destinations ?? []}
+        destinationResults={
+          midpointMutation.data?.candidates ??
+          nearbyDestinationSearchMutation.data ??
+          destinationSearchMutation.data?.destinations ??
+          []
+        }
         selectedCandidateId={selectedCandidateId}
         canSearchDestinations={participants.length > 0 && destinationQuery.trim().length > 0}
+        canFindMidpoint={participants.length >= 2}
         searchingDestinations={destinationSearchMutation.isPending || nearbyDestinationSearchMutation.isPending}
+        findingMidpoint={midpointMutation.isPending}
         onActiveTargetChange={selectActiveTarget}
         onDestinationQueryChange={(query) => {
           setDestinationQuery(query);
           destinationSearchMutation.reset();
           nearbyDestinationSearchMutation.reset();
+          midpointMutation.reset();
         }}
         onMaxDurationMinutesChange={(minutes) => {
           setMaxDurationMinutes(minutes);
           destinationSearchMutation.reset();
           nearbyDestinationSearchMutation.reset();
           meetingAreaMutation.reset();
+          midpointMutation.reset();
         }}
         onSearchRadiusMetersChange={(meters) => {
           setSearchRadiusMeters(meters);
           destinationSearchMutation.reset();
           nearbyDestinationSearchMutation.reset();
+          midpointMutation.reset();
         }}
         onSortByChange={(nextSortBy) => {
           setSortBy(nextSortBy);
           destinationSearchMutation.reset();
           nearbyDestinationSearchMutation.reset();
+          midpointMutation.reset();
         }}
         onShowMeetingAreaChange={(show) => {
           setShowMeetingArea(show);
           setMapLayer("areas", show);
         }}
         onDestinationSearch={() => void searchDestinations()}
+        onFindMidpoint={() => void findMidpoint()}
         onDestinationSelect={selectDestinationCandidate}
         onParticipantAdd={addParticipant}
         onParticipantRemove={removeParticipant}
@@ -382,8 +428,13 @@ function HomePage() {
         layers={mapLayers}
         estimate={estimateMutation.data}
         routes={routesMutation.data}
-        meetingArea={showMeetingArea ? meetingAreaMutation.data ?? destinationSearchMutation.data?.area : undefined}
-        destinationCandidates={nearbyDestinationSearchMutation.data ?? destinationSearchMutation.data?.destinations ?? []}
+        meetingArea={showMeetingArea ? midpointMutation.data?.area ?? meetingAreaMutation.data ?? destinationSearchMutation.data?.area : undefined}
+        destinationCandidates={
+          midpointMutation.data?.candidates ??
+          nearbyDestinationSearchMutation.data ??
+          destinationSearchMutation.data?.destinations ??
+          []
+        }
         estimating={estimateMutation.isPending}
         loadingRoutes={routesMutation.isPending}
         estimateError={estimateMutation.error?.message}

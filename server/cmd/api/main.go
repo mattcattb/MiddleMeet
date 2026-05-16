@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"middle-meetup-server/internal/httpapi"
@@ -26,7 +27,11 @@ func main() {
 		return
 	}
 
-	config := httpapi.Config{Port: port, OpenRouteAPIKey: openRouteApiKey}
+	config := httpapi.Config{
+		Port:            port,
+		OpenRouteAPIKey: openRouteApiKey,
+		CORSOrigins:     splitEnvList(os.Getenv("CORS_ORIGINS")),
+	}
 
 	openrouteClient := openroute.NewClient(openRouteApiKey)
 
@@ -52,4 +57,18 @@ func main() {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
 	}
+}
+
+func splitEnvList(value string) []string {
+	parts := strings.Split(value, ",")
+	values := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			values = append(values, part)
+		}
+	}
+
+	return values
 }

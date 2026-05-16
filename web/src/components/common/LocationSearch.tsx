@@ -12,6 +12,7 @@ export function LocationSearch({
   autoFocus = false,
   onLocationSelect,
   className = "",
+  inputClassName = "",
 }: {
   label?: string;
   searchCenter: Location["coord"];
@@ -21,6 +22,7 @@ export function LocationSearch({
   autoFocus?: boolean;
   onLocationSelect: (point: Location) => void;
   className?: string;
+  inputClassName?: string;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [open, setOpen] = useState(false);
@@ -130,7 +132,7 @@ export function LocationSearch({
     <div ref={searchRef} className={`relative ${className}`}>
       {label ? <div className="text-sm font-medium">{label}</div> : null}
       <input
-        className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+        className={`h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-primary ${inputClassName}`}
         value={query}
         onFocus={() => setOpen(true)}
         onChange={(event) => {

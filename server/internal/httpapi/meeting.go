@@ -62,6 +62,21 @@ func (app *Application) MeetingAreaHandler(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, resp)
 }
 
+func (app *Application) FindMeetingMidpointHandler(w http.ResponseWriter, r *http.Request) {
+	var req MeetingAreaRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	resp, err := app.MeetingPlanner.FindMidpoint(req.Participants, req.Constraints)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "midpoint_failed", "Meeting midpoint failed", err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func (app *Application) SearchMeetingDestinationsHandler(w http.ResponseWriter, r *http.Request) {
 	var req meeting.DestinationSearchRequest
 	if !decodeJSON(w, r, &req) {

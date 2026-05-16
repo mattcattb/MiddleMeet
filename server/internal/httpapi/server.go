@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Port            string
 	OpenRouteAPIKey string
+	CORSOrigins     []string
 }
 
 type Application struct {
@@ -26,13 +27,14 @@ func NewServer(app Application) http.Handler {
 	mux.HandleFunc("POST /api/meeting/estimate", app.EstimateMeetingHandler)
 	mux.HandleFunc("POST /api/meeting/routes", app.MeetingRoutesHandler)
 	mux.HandleFunc("POST /api/meeting/area", app.MeetingAreaHandler)
+	mux.HandleFunc("POST /api/meeting/midpoint", app.FindMeetingMidpointHandler)
 	mux.HandleFunc("POST /api/meeting/destinations/search", app.SearchMeetingDestinationsHandler)
 
 	mux.HandleFunc("GET /api/locations/search", app.SearchLocationsHandler)
 	mux.HandleFunc("GET /api/locations/autocomplete", app.AutocompleteLocationsHandler)
 	mux.HandleFunc("GET /api/locations/reverse", app.ReverseGeocodeHandler)
 
-	return withCORS(mux)
+	return withCORS(mux, app.Config.CORSOrigins)
 }
 
 func health(w http.ResponseWriter, r *http.Request) {
@@ -62,10 +64,11 @@ func writeJSONError(w http.ResponseWriter, status int, code string, message stri
 	})
 }
 
-func withCORS(next http.Handler) http.Handler {
+func withCORS(next http.Handler, allowedOrigins []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isAllowedDevOrigin(r.Header.Get("Origin")) {
-			w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+		origin := r.Header.Get("Origin")
+		if isAllowedOrigin(origin, allowedOrigins) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -80,6 +83,16 @@ func withCORS(next http.Handler) http.Handler {
 	})
 }
 
-func isAllowedDevOrigin(origin string) bool {
-	return strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:")
+func isAllowedOrigin(origin string, allowedOrigins []string) bool {
+	if strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:") {
+		return true
+	}
+
+	for _, allowedOrigin := range allowedOrigins {
+		if origin == allowedOrigin {
+			return true
+		}
+	}
+
+	return false
 }

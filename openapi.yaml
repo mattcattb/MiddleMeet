@@ -93,6 +93,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/meeting/midpoint:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingAreaRequest"
+      responses:
+        "200":
+          description: Ranked midpoint candidates for the participant set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MidpointResponse"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/meeting/destinations/search:
     post:
       requestBody:
@@ -357,6 +384,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DestinationCandidate"
+    MidpointResponse:
+      type: object
+      required: [midpoint, candidates]
+      properties:
+        midpoint:
+          $ref: "#/components/schemas/DestinationCandidate"
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationCandidate"
+        area:
+          $ref: "#/components/schemas/MeetingArea"
     MeetingRoutes:
       type: object
       required: [destination, routes]

@@ -11,14 +11,7 @@ export function ResultsPanel({
   onDestinationSelect: (candidate: DestinationCandidate) => void;
 }) {
   if (results.length === 0) {
-    return (
-      <section className="space-y-2 border-t border-border pt-4">
-        <div className="text-sm font-medium">Results</div>
-        <div className="border border-dashed border-border bg-muted/50 px-3 py-3 text-sm text-muted-foreground">
-          Add locations, then search for places to compare meetup options.
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (

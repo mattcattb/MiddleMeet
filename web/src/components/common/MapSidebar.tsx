@@ -17,7 +17,9 @@ export function MapSidebar({
   destinationResults,
   selectedCandidateId,
   canSearchDestinations,
+  canFindMidpoint,
   searchingDestinations,
+  findingMidpoint,
   onActiveTargetChange,
   onDestinationQueryChange,
   onMaxDurationMinutesChange,
@@ -25,6 +27,7 @@ export function MapSidebar({
   onSortByChange,
   onShowMeetingAreaChange,
   onDestinationSearch,
+  onFindMidpoint,
   onDestinationSelect,
   onParticipantAdd,
   onParticipantRemove,
@@ -42,7 +45,9 @@ export function MapSidebar({
   destinationResults: DestinationCandidate[];
   selectedCandidateId: string | null;
   canSearchDestinations: boolean;
+  canFindMidpoint: boolean;
   searchingDestinations: boolean;
+  findingMidpoint: boolean;
   onActiveTargetChange: (target: ActiveTarget) => void;
   onDestinationQueryChange: (query: string) => void;
   onMaxDurationMinutesChange: (minutes: number) => void;
@@ -50,6 +55,7 @@ export function MapSidebar({
   onSortByChange: (sortBy: SortBy) => void;
   onShowMeetingAreaChange: (show: boolean) => void;
   onDestinationSearch: () => void;
+  onFindMidpoint: () => void;
   onDestinationSelect: (candidate: DestinationCandidate) => void;
   onParticipantAdd: (location: Location) => void;
   onParticipantRemove: (participantId: string) => void;
@@ -77,13 +83,16 @@ export function MapSidebar({
           sortBy={sortBy}
           showMeetingArea={showMeetingArea}
           canSearchDestinations={canSearchDestinations}
+          canFindMidpoint={canFindMidpoint}
           searchingDestinations={searchingDestinations}
+          findingMidpoint={findingMidpoint}
           onDestinationQueryChange={onDestinationQueryChange}
           onMaxDurationMinutesChange={onMaxDurationMinutesChange}
           onSearchRadiusMetersChange={onSearchRadiusMetersChange}
           onSortByChange={onSortByChange}
           onShowMeetingAreaChange={onShowMeetingAreaChange}
           onDestinationSearch={onDestinationSearch}
+          onFindMidpoint={onFindMidpoint}
         />
 
         {meetingAreaError ? <ErrorMessage message={meetingAreaError} /> : null}

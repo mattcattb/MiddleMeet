@@ -210,6 +210,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/meeting/midpoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MeetingAreaRequest"];
+                };
+            };
+            responses: {
+                /** @description Ranked midpoint candidates for the participant set. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MidpointResponse"];
+                    };
+                };
+                /** @description Invalid request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/meeting/destinations/search": {
         parameters: {
             query?: never;
@@ -492,6 +549,11 @@ export interface components {
             query: string;
             area?: components["schemas"]["MeetingArea"];
             destinations: components["schemas"]["DestinationCandidate"][];
+        };
+        MidpointResponse: {
+            midpoint: components["schemas"]["DestinationCandidate"];
+            candidates: components["schemas"]["DestinationCandidate"][];
+            area?: components["schemas"]["MeetingArea"];
         };
         MeetingRoutes: {
             destination: components["schemas"]["Location"];
