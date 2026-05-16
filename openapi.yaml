@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Map Go API
+  title: Middle Meetup API
   version: 0.1.0
 paths:
   /health:
@@ -45,7 +45,101 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/locations/search:
+    get:
+      operationId: searchLocations
+      tags:
+        - locations
+      parameters:
+        - $ref: "#/components/parameters/LocationQuery"
+        - $ref: "#/components/parameters/Lat"
+        - $ref: "#/components/parameters/Lng"
+        - name: radiusMeters
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 10000
+      responses:
+        "200":
+          description: Locations matching the query near the provided point.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationList"
+        "400":
+          description: Invalid search query.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/locations/autocomplete:
+    get:
+      operationId: autocompleteLocations
+      tags:
+        - locations
+      parameters:
+        - $ref: "#/components/parameters/LocationQuery"
+        - $ref: "#/components/parameters/Lat"
+        - $ref: "#/components/parameters/Lng"
+      responses:
+        "200":
+          description: Location suggestions for the provided query.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationList"
+        "400":
+          description: Invalid autocomplete query.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/locations/reverse:
+    get:
+      operationId: reverseGeocode
+      tags:
+        - locations
+      parameters:
+        - $ref: "#/components/parameters/Lat"
+        - $ref: "#/components/parameters/Lng"
+      responses:
+        "200":
+          description: Closest known location for the provided coordinate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "400":
+          description: Invalid reverse geocode query.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
+  parameters:
+    LocationQuery:
+      name: query
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    Lat:
+      name: lat
+      in: query
+      required: true
+      schema:
+        type: number
+        format: double
+    Lng:
+      name: lng
+      in: query
+      required: true
+      schema:
+        type: number
+        format: double
   schemas:
     Coord:
       type: object
@@ -82,6 +176,7 @@ components:
         - to
         - distanceMeters
         - durationSeconds
+        - geometry
       properties:
         from:
           $ref: "#/components/schemas/Location"
@@ -93,6 +188,63 @@ components:
         durationSeconds:
           type: integer
           format: int32
+        geometry:
+          $ref: "#/components/schemas/RouteGeometry"
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteStep"
+        bbox:
+          type: array
+          description: Bounding box from OpenRouteService in lon/lat order.
+          minItems: 4
+          maxItems: 4
+          items:
+            type: number
+            format: double
+    RouteGeometry:
+      type: object
+      additionalProperties: false
+      properties:
+        polyline:
+          type: string
+          description: Encoded route polyline returned by OpenRouteService.
+        points:
+          type: array
+          description: Decoded route coordinates in frontend-friendly lat/lng order.
+          items:
+            $ref: "#/components/schemas/Coord"
+    RouteStep:
+      type: object
+      additionalProperties: false
+      required:
+        - instruction
+        - distanceMeters
+        - durationSeconds
+      properties:
+        instruction:
+          type: string
+        name:
+          type: string
+        distanceMeters:
+          type: integer
+          format: int32
+        durationSeconds:
+          type: integer
+          format: int32
+        type:
+          type: integer
+          format: int32
+        wayPoints:
+          type: array
+          description: Start and end indexes into geometry.points for this instruction.
+          items:
+            type: integer
+            format: int32
+        start:
+          $ref: "#/components/schemas/Coord"
+        end:
+          $ref: "#/components/schemas/Coord"
     MeetingOption:
       type: object
       additionalProperties: false
@@ -139,6 +291,10 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/MeetingOption"
+    LocationList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Location"
     ErrorResponse:
       type: object
       additionalProperties: false

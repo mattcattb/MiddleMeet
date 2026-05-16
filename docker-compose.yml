@@ -3,7 +3,7 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-matty_stack}
+      POSTGRES_DB: ${POSTGRES_DB:-middle_meetup}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
@@ -14,7 +14,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-matty_stack}",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-middle_meetup}",
         ]
       interval: 10s
       timeout: 5s

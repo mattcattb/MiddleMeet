@@ -1,19 +1,20 @@
-# matty-stack
+# middle-meetup
 
-Boilerplate monorepo with a Bun + Hono server, Better Auth (Drizzle adapter), and a simple React web app.
+Small learning app for comparing meet-in-the-middle destinations with a Go REST API and a React frontend.
 
 ## What's Included
 
-- **Server**: Bun + Hono API with Better Auth and Drizzle ORM (Postgres)
-- **Web**: React + TanStack Router + Tailwind
-- **Local infra**: one Postgres container via Docker Compose
+- **Server**: Go standard library HTTP API
+- **Web**: React + TanStack Router + TanStack Query + Tailwind
+- **API contract**: OpenAPI definition used to generate TypeScript client types
+- **Local infra**: Docker Compose placeholder for Postgres when persistence is added
 
 ## Structure
 
-```
-packages/
-  server/        # Hono API + Better Auth + Drizzle
-  web/           # React client
+```txt
+server/          # Go HTTP API, meeting logic, map provider clients
+web/             # React client with its own Bun dependencies
+openapi.yaml     # REST API contract for generated frontend types
 ```
 
 ## Quick Start
@@ -24,57 +25,45 @@ packages/
 cp .env.example .env
 ```
 
-2. Start Postgres:
+2. Install web dependencies:
 
 ```bash
-docker compose up -d
-```
-
-3. Install dependencies:
-
-```bash
+cd web
 bun install
+cd ..
 ```
 
-4. Run Drizzle migrations:
+3. Start the Go API:
 
 ```bash
-bun run db:migrate
+bun run dev:server
 ```
 
-5. Start dev servers:
+4. Start the web app:
 
 ```bash
-bun run dev
+bun run dev:web
 ```
 
 The server runs on `http://localhost:3000` and the web app on `http://localhost:5173`.
 
-`bun run dev` reads the shared root [`.env`](/Users/matthewboughton/Desktop/matty-stack/.env), and Vite is configured to load the same file for the web app.
+## API
 
-## Auth Routes
+- `GET /health` - check that the Go API is running
+- `POST /api/meeting/compare` - compare candidate meetup destinations for two origins
 
-Better Auth is mounted at `/api/auth` and supports:
+Regenerate frontend OpenAPI types after changing `openapi.yaml`:
 
-- `POST /api/auth/sign-up/email`
-- `POST /api/auth/sign-in/email`
-- `POST /api/auth/sign-out`
-- `GET /api/auth/session`
-
-## Example API (Projects)
-
-Authenticated routes (require session cookie):
-
-- `GET /api/projects` - list projects
-- `POST /api/projects` - create project `{ "name": "My Project" }`
+```bash
+bun run openapi:gen
+```
 
 ## Scripts
 
-- `bun run dev` - run all dev servers
+- `bun run dev` - start the web dev command
 - `bun run dev:server` - server only
 - `bun run dev:web` - web only
-- `bun run infra:up` - start local Postgres
-- `bun run infra:down` - stop local Postgres
-- `bun run db:generate` - Drizzle generate
-- `bun run db:migrate` - Drizzle migrate
-- `bun run db:studio` - Drizzle studio
+- `bun run build` - build the web app
+- `bun run openapi:gen` - generate TypeScript API types from OpenAPI
+- `bun run infra:up` - start local infrastructure
+- `bun run infra:down` - stop local infrastructure

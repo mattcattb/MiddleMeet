@@ -30,7 +30,7 @@ logs/
 bun.lockb
 
 # Drizzle
-packages/server/drizzle/
+server/drizzle/
 
 # Turbo
 .turbo/
