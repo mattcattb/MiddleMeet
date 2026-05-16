@@ -22,8 +22,8 @@ func NewServer(app Application) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", health)
 
-	mux.HandleFunc("POST /api/meeting/compare", app.CompareMeetingOptionsHandler)
-	mux.HandleFunc("POST /api/meeting/estimate", app.CompareMeetingOptionsHandler)
+	mux.HandleFunc("POST /api/meeting/estimate", app.EstimateMeetingHandler)
+	mux.HandleFunc("POST /api/meeting/routes", app.MeetingRoutesHandler)
 
 	mux.HandleFunc("GET /api/locations/search", app.SearchLocationsHandler)
 	mux.HandleFunc("GET /api/locations/autocomplete", app.AutocompleteLocationsHandler)

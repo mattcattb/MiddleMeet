@@ -5,9 +5,6 @@ info:
 paths:
   /health:
     get:
-      operationId: getHealth
-      tags:
-        - health
       responses:
         "200":
           description: Server health.
@@ -15,26 +12,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
-  /api/meeting/compare:
+  /api/meeting/estimate:
     post:
-      operationId: compareMeeting
-      tags:
-        - meeting
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CompareMeetingRequest"
+              $ref: "#/components/schemas/MeetingRequest"
       responses:
         "200":
-          description: Meeting destination comparison results.
+          description: Matrix-based meeting estimate.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompareMeetingResponse"
+                $ref: "#/components/schemas/MeetingEstimate"
         "400":
-          description: Invalid request body.
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/meeting/routes:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingRequest"
+      responses:
+        "200":
+          description: Detailed meeting routes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingRoutes"
+        "400":
+          description: Invalid request.
           content:
             application/json:
               schema:
@@ -47,45 +68,38 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /api/locations/search:
     get:
-      operationId: searchLocations
-      tags:
-        - locations
       parameters:
         - $ref: "#/components/parameters/LocationQuery"
         - $ref: "#/components/parameters/Lat"
         - $ref: "#/components/parameters/Lng"
         - name: radiusMeters
           in: query
-          required: false
           schema:
             type: integer
             format: int32
             default: 10000
       responses:
         "200":
-          description: Locations matching the query near the provided point.
+          description: Matching locations.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/LocationList"
         "400":
-          description: Invalid search query.
+          description: Invalid search.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   /api/locations/autocomplete:
     get:
-      operationId: autocompleteLocations
-      tags:
-        - locations
       parameters:
         - $ref: "#/components/parameters/LocationQuery"
         - $ref: "#/components/parameters/Lat"
         - $ref: "#/components/parameters/Lng"
       responses:
         "200":
-          description: Location suggestions for the provided query.
+          description: Location suggestions.
           content:
             application/json:
               schema:
@@ -98,15 +112,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /api/locations/reverse:
     get:
-      operationId: reverseGeocode
-      tags:
-        - locations
       parameters:
         - $ref: "#/components/parameters/Lat"
         - $ref: "#/components/parameters/Lng"
       responses:
         "200":
-          description: Closest known location for the provided coordinate.
+          description: Closest known location.
           content:
             application/json:
               schema:
@@ -143,10 +154,7 @@ components:
   schemas:
     Coord:
       type: object
-      additionalProperties: false
-      required:
-        - lat
-        - lng
+      required: [lat, lng]
       properties:
         lat:
           type: number
@@ -156,11 +164,7 @@ components:
           format: double
     Location:
       type: object
-      additionalProperties: false
-      required:
-        - name
-        - address
-        - coord
+      required: [name, address, coord]
       properties:
         name:
           type: string
@@ -168,15 +172,71 @@ components:
           type: string
         coord:
           $ref: "#/components/schemas/Coord"
+    Participant:
+      type: object
+      required: [name, location]
+      properties:
+        name:
+          type: string
+        location:
+          $ref: "#/components/schemas/Location"
+    ParticipantEstimate:
+      type: object
+      required: [participantName, location, distanceMeters, durationSeconds]
+      properties:
+        participantName:
+          type: string
+        location:
+          $ref: "#/components/schemas/Location"
+        distanceMeters:
+          type: integer
+          format: int32
+        durationSeconds:
+          type: integer
+          format: int32
+    MeetingEstimate:
+      type: object
+      required: [destination, participants, averageDurationSeconds, totalDurationSeconds, durationSpreadSeconds, maxDurationSeconds]
+      properties:
+        destination:
+          $ref: "#/components/schemas/Location"
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipantEstimate"
+        averageDurationSeconds:
+          type: integer
+          format: int32
+        totalDurationSeconds:
+          type: integer
+          format: int32
+        durationSpreadSeconds:
+          type: integer
+          format: int32
+        maxDurationSeconds:
+          type: integer
+          format: int32
+    MeetingRoutes:
+      type: object
+      required: [destination, routes]
+      properties:
+        destination:
+          $ref: "#/components/schemas/Location"
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipantRoute"
+    ParticipantRoute:
+      type: object
+      required: [participantName, route]
+      properties:
+        participantName:
+          type: string
+        route:
+          $ref: "#/components/schemas/RouteEstimate"
     RouteEstimate:
       type: object
-      additionalProperties: false
-      required:
-        - from
-        - to
-        - distanceMeters
-        - durationSeconds
-        - geometry
+      required: [from, to, distanceMeters, durationSeconds, geometry]
       properties:
         from:
           $ref: "#/components/schemas/Location"
@@ -196,31 +256,21 @@ components:
             $ref: "#/components/schemas/RouteStep"
         bbox:
           type: array
-          description: Bounding box from OpenRouteService in lon/lat order.
-          minItems: 4
-          maxItems: 4
           items:
             type: number
             format: double
     RouteGeometry:
       type: object
-      additionalProperties: false
       properties:
         polyline:
           type: string
-          description: Encoded route polyline returned by OpenRouteService.
         points:
           type: array
-          description: Decoded route coordinates in frontend-friendly lat/lng order.
           items:
             $ref: "#/components/schemas/Coord"
     RouteStep:
       type: object
-      additionalProperties: false
-      required:
-        - instruction
-        - distanceMeters
-        - durationSeconds
+      required: [instruction, distanceMeters, durationSeconds]
       properties:
         instruction:
           type: string
@@ -237,7 +287,6 @@ components:
           format: int32
         wayPoints:
           type: array
-          description: Start and end indexes into geometry.points for this instruction.
           items:
             type: integer
             format: int32
@@ -245,63 +294,23 @@ components:
           $ref: "#/components/schemas/Coord"
         end:
           $ref: "#/components/schemas/Coord"
-    MeetingOption:
+    MeetingRequest:
       type: object
-      additionalProperties: false
-      required:
-        - destination
-        - fromA
-        - fromB
-        - totalDurationSeconds
-        - durationDifferenceSeconds
-        - maxDurationSeconds
+      required: [participants, destination]
       properties:
-        destination:
-          $ref: "#/components/schemas/Location"
-        fromA:
-          $ref: "#/components/schemas/RouteEstimate"
-        fromB:
-          $ref: "#/components/schemas/RouteEstimate"
-        totalDurationSeconds:
-          type: integer
-          format: int32
-        durationDifferenceSeconds:
-          type: integer
-          format: int32
-        maxDurationSeconds:
-          type: integer
-          format: int32
-    CompareMeetingRequest:
-      type: object
-      additionalProperties: false
-      required:
-        - locationA
-        - locationB
-        - interestAreas
-      properties:
-        locationA:
-          $ref: "#/components/schemas/Location"
-        locationB:
-          $ref: "#/components/schemas/Location"
-        interestAreas:
+        participants:
           type: array
           items:
-            $ref: "#/components/schemas/Location"
-    CompareMeetingResponse:
-      type: array
-      items:
-        $ref: "#/components/schemas/MeetingOption"
+            $ref: "#/components/schemas/Participant"
+        destination:
+          $ref: "#/components/schemas/Location"
     LocationList:
       type: array
       items:
         $ref: "#/components/schemas/Location"
     ErrorResponse:
       type: object
-      additionalProperties: false
-      required:
-        - error
-        - code
-        - details
+      required: [error, code, details]
       properties:
         error:
           type: string
@@ -311,10 +320,7 @@ components:
           type: string
     HealthResponse:
       type: object
-      additionalProperties: false
-      required:
-        - ok
-        - message
+      required: [ok, message]
       properties:
         ok:
           type: boolean

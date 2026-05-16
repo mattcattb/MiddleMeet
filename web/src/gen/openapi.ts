@@ -11,7 +11,26 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["getHealth"];
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Server health. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HealthResponse"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
@@ -20,7 +39,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/meeting/compare": {
+    "/api/meeting/estimate": {
         parameters: {
             query?: never;
             header?: never;
@@ -29,7 +48,105 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["compareMeeting"];
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MeetingRequest"];
+                };
+            };
+            responses: {
+                /** @description Matrix-based meeting estimate. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetingEstimate"];
+                    };
+                };
+                /** @description Invalid request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meeting/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MeetingRequest"];
+                };
+            };
+            responses: {
+                /** @description Detailed meeting routes. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetingRoutes"];
+                    };
+                };
+                /** @description Invalid request. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Server error. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -43,7 +160,40 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["searchLocations"];
+        get: {
+            parameters: {
+                query: {
+                    query: components["parameters"]["LocationQuery"];
+                    lat: components["parameters"]["Lat"];
+                    lng: components["parameters"]["Lng"];
+                    radiusMeters?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Matching locations. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LocationList"];
+                    };
+                };
+                /** @description Invalid search. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
@@ -59,7 +209,39 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["autocompleteLocations"];
+        get: {
+            parameters: {
+                query: {
+                    query: components["parameters"]["LocationQuery"];
+                    lat: components["parameters"]["Lat"];
+                    lng: components["parameters"]["Lng"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Location suggestions. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LocationList"];
+                    };
+                };
+                /** @description Invalid autocomplete query. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
@@ -75,7 +257,38 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["reverseGeocode"];
+        get: {
+            parameters: {
+                query: {
+                    lat: components["parameters"]["Lat"];
+                    lng: components["parameters"]["Lng"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Closest known location. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Location"];
+                    };
+                };
+                /** @description Invalid reverse geocode query. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
@@ -99,6 +312,38 @@ export interface components {
             address: string;
             coord: components["schemas"]["Coord"];
         };
+        Participant: {
+            name: string;
+            location: components["schemas"]["Location"];
+        };
+        ParticipantEstimate: {
+            participantName: string;
+            location: components["schemas"]["Location"];
+            /** Format: int32 */
+            distanceMeters: number;
+            /** Format: int32 */
+            durationSeconds: number;
+        };
+        MeetingEstimate: {
+            destination: components["schemas"]["Location"];
+            participants: components["schemas"]["ParticipantEstimate"][];
+            /** Format: int32 */
+            averageDurationSeconds: number;
+            /** Format: int32 */
+            totalDurationSeconds: number;
+            /** Format: int32 */
+            durationSpreadSeconds: number;
+            /** Format: int32 */
+            maxDurationSeconds: number;
+        };
+        MeetingRoutes: {
+            destination: components["schemas"]["Location"];
+            routes: components["schemas"]["ParticipantRoute"][];
+        };
+        ParticipantRoute: {
+            participantName: string;
+            route: components["schemas"]["RouteEstimate"];
+        };
         RouteEstimate: {
             from: components["schemas"]["Location"];
             to: components["schemas"]["Location"];
@@ -108,13 +353,10 @@ export interface components {
             durationSeconds: number;
             geometry: components["schemas"]["RouteGeometry"];
             steps?: components["schemas"]["RouteStep"][];
-            /** @description Bounding box from OpenRouteService in lon/lat order. */
             bbox?: number[];
         };
         RouteGeometry: {
-            /** @description Encoded route polyline returned by OpenRouteService. */
             polyline?: string;
-            /** @description Decoded route coordinates in frontend-friendly lat/lng order. */
             points?: components["schemas"]["Coord"][];
         };
         RouteStep: {
@@ -126,28 +368,14 @@ export interface components {
             durationSeconds: number;
             /** Format: int32 */
             type?: number;
-            /** @description Start and end indexes into geometry.points for this instruction. */
             wayPoints?: number[];
             start?: components["schemas"]["Coord"];
             end?: components["schemas"]["Coord"];
         };
-        MeetingOption: {
+        MeetingRequest: {
+            participants: components["schemas"]["Participant"][];
             destination: components["schemas"]["Location"];
-            fromA: components["schemas"]["RouteEstimate"];
-            fromB: components["schemas"]["RouteEstimate"];
-            /** Format: int32 */
-            totalDurationSeconds: number;
-            /** Format: int32 */
-            durationDifferenceSeconds: number;
-            /** Format: int32 */
-            maxDurationSeconds: number;
         };
-        CompareMeetingRequest: {
-            locationA: components["schemas"]["Location"];
-            locationB: components["schemas"]["Location"];
-            interestAreas: components["schemas"]["Location"][];
-        };
-        CompareMeetingResponse: components["schemas"]["MeetingOption"][];
         LocationList: components["schemas"]["Location"][];
         ErrorResponse: {
             error: string;
@@ -170,166 +398,4 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export interface operations {
-    getHealth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Server health. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
-    };
-    compareMeeting: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompareMeetingRequest"];
-            };
-        };
-        responses: {
-            /** @description Meeting destination comparison results. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CompareMeetingResponse"];
-                };
-            };
-            /** @description Invalid request body. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Server error. */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    searchLocations: {
-        parameters: {
-            query: {
-                query: components["parameters"]["LocationQuery"];
-                lat: components["parameters"]["Lat"];
-                lng: components["parameters"]["Lng"];
-                radiusMeters?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Locations matching the query near the provided point. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LocationList"];
-                };
-            };
-            /** @description Invalid search query. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    autocompleteLocations: {
-        parameters: {
-            query: {
-                query: components["parameters"]["LocationQuery"];
-                lat: components["parameters"]["Lat"];
-                lng: components["parameters"]["Lng"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Location suggestions for the provided query. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LocationList"];
-                };
-            };
-            /** @description Invalid autocomplete query. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    reverseGeocode: {
-        parameters: {
-            query: {
-                lat: components["parameters"]["Lat"];
-                lng: components["parameters"]["Lng"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Closest known location for the provided coordinate. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Location"];
-                };
-            };
-            /** @description Invalid reverse geocode query. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-}
+export type operations = Record<string, never>;

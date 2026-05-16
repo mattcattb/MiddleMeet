@@ -14,8 +14,31 @@ type RouteEstimate struct {
 	BBox            []float64         `json:"bbox,omitempty"`
 }
 
+type Participant struct {
+	Name     string       `json:"name"`
+	Location geo.Location `json:"location"`
+}
+
+type ParticipantEstimate struct {
+	ParticipantName string       `json:"participantName"`
+	Location        geo.Location `json:"location"`
+	DistanceMeters  int          `json:"distanceMeters"`
+	DurationSeconds int          `json:"durationSeconds"`
+}
+
+type ParticipantRoute struct {
+	ParticipantName string        `json:"participantName"`
+	Route           RouteEstimate `json:"route"`
+}
+
+type MeetingRoutes struct {
+	Destination geo.Location       `json:"destination"`
+	Routes      []ParticipantRoute `json:"routes"`
+}
+
 type RouteEstimator interface {
 	EstimateRoute(from geo.Location, to geo.Location) (RouteEstimate, error)
+	EstimateRouteMatrix(origins []geo.Location, destinations []geo.Location) (RouteMatrix, error)
 }
 
 type RouteMatrix struct {
@@ -23,23 +46,13 @@ type RouteMatrix struct {
 	DistanceMeters  [][]int `json:"distanceMeters,omitempty"`
 }
 
-type ReachableArea struct{}
+type MeetingEstimate struct {
+	Destination geo.Location `json:"destination"`
 
-type MeetingOption struct {
-	Destination geo.Location  `json:"destination"`
-	FromA       RouteEstimate `json:"fromA"`
-	FromB       RouteEstimate `json:"fromB"`
+	Participants []ParticipantEstimate `json:"participants"`
 
-	TotalDurationSeconds      int `json:"totalDurationSeconds"`
-	DurationDifferenceSeconds int `json:"durationDifferenceSeconds"`
-	MaxDurationSeconds        int `json:"maxDurationSeconds"`
-}
-
-func abs(x int) int {
-
-	if x < 0 {
-		return -x
-	}
-	return x
-
+	AverageDurationSeconds int `json:"averageDurationSeconds"`
+	TotalDurationSeconds   int `json:"totalDurationSeconds"`
+	DurationSpreadSeconds  int `json:"durationSpreadSeconds"`
+	MaxDurationSeconds     int `json:"maxDurationSeconds"`
 }
