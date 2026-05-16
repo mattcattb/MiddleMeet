@@ -20,5 +20,19 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.35.1
+    restart: unless-stopped
+    command:
+      [
+        "dragonfly",
+        "--bind",
+        "0.0.0.0",
+        "--proactor_threads=1",
+        "--maxmemory=256mb",
+      ]
+    ports:
+      - "16379:6379"
+
 volumes:
   postgres-data:

@@ -6,7 +6,7 @@ Small learning app for comparing meet-in-the-middle destinations with a Go REST 
 
 - **Server**: Go standard library HTTP API
 - **Web**: React + TanStack Router + TanStack Query + Tailwind
-- **API contract**: OpenAPI definition used to generate TypeScript client types
+- **API client**: Small typed `openapi-fetch` client in `web/src/lib/openapi.ts`
 - **Local infra**: Docker Compose placeholder for Postgres when persistence is added
 
 ## Structure
@@ -14,7 +14,6 @@ Small learning app for comparing meet-in-the-middle destinations with a Go REST 
 ```txt
 server/          # Go HTTP API, meeting logic, map provider clients
 web/             # React client with its own Bun dependencies
-openapi.yaml     # REST API contract for generated frontend types
 ```
 
 ## Quick Start
@@ -50,13 +49,11 @@ The server runs on `http://localhost:3000` and the web app on `http://localhost:
 ## API
 
 - `GET /health` - check that the Go API is running
-- `POST /api/meeting/compare` - compare candidate meetup destinations for two origins
-
-Regenerate frontend OpenAPI types after changing `openapi.yaml`:
-
-```bash
-bun run openapi:gen
-```
+- `POST /api/meeting/estimate` - matrix-based travel estimates for people to one destination
+- `POST /api/meeting/routes` - detailed route geometry for drawing map lines
+- `GET /api/locations/search` - location search
+- `GET /api/locations/autocomplete` - location autocomplete
+- `GET /api/locations/reverse` - reverse geocode a map coordinate
 
 ## Scripts
 
@@ -64,6 +61,5 @@ bun run openapi:gen
 - `bun run dev:server` - server only
 - `bun run dev:web` - web only
 - `bun run build` - build the web app
-- `bun run openapi:gen` - generate TypeScript API types from OpenAPI
 - `bun run infra:up` - start local infrastructure
 - `bun run infra:down` - stop local infrastructure

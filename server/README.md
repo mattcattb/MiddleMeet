@@ -6,7 +6,7 @@ Small Go backend scaffold for learning maps, places, and travel-time APIs withou
 
 ```bash
 cd server
-go run ./cmd/api
+make dev
 ```
 
 Optional environment:
@@ -15,6 +15,17 @@ Optional environment:
 PORT=3000
 OPENROUTE_API_KEY=your-key
 ```
+
+## Make Targets
+
+- `make dev` - run the API with `../.env` and `.env` loaded
+- `make run` - run the API without loading env files
+- `make build` - build the API binary to `bin/api`
+- `make start` - run the built binary
+- `make test` - run Go tests
+- `make fmt` - format Go code
+- `make vet` - run `go vet`
+- `make tidy` - tidy module dependencies
 
 ## Starting endpoint
 
