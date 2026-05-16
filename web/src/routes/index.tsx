@@ -1,10 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { MeetupMap } from "../components/meetup/meetup-map";
-import { MeetupSidebar } from "../components/meetup/meetup-sidebar";
-import type { ActiveTarget, Location, Participant } from "../components/meetup/types";
-import { activeTargetLabel, activeTargetLocation, participantColors } from "../components/meetup/types";
+import { useEffect, useState } from "react";
+import { MapView } from "../components/common/MapView";
+import { MapSidebar } from "../components/common/MapSidebar";
+import { candidateKey } from "../components/common/ResultsPanel";
+import type { ActiveTarget, DestinationCandidate, Location, MapLayerVisibility, Participant, SortBy } from "../components/common/types";
+import { activeTargetLocation, participantColors } from "../components/common/types";
 import type { components } from "../gen/openapi";
 import { openAPIClient } from "../lib/openapi";
 
@@ -12,105 +13,49 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-type MeetingRequest = components["schemas"]["MeetingRequest"];
-
-const initialParticipants: Participant[] = [
-  {
-    id: "person-1",
-    name: "Person 1",
-    color: participantColors[0],
-    location: {
-      name: "Person 1",
-      address: "Lower Manhattan",
-      coord: { lat: 40.7128, lng: -74.006 },
-    },
-  },
-  {
-    id: "person-2",
-    name: "Person 2",
-    color: participantColors[1],
-    location: {
-      name: "Person 2",
-      address: "Brooklyn",
-      coord: { lat: 40.6782, lng: -73.9442 },
-    },
-  },
-];
-
 function HomePage() {
-  const [activeTarget, setActiveTarget] = useState<ActiveTarget>({ type: "participant", id: "person-1" });
-  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
-  const [destination, setDestination] = useState<Location | null>({
-    name: "Destination",
-    address: "Prospect Park",
-    coord: { lat: 40.6602, lng: -73.969 },
+  const [activeTarget, setActiveTarget] = useState<ActiveTarget>({ type: "none" });
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [estimateTarget, setEstimateTarget] = useState<Location | null>(null);
+  const [destinationQuery, setDestinationQuery] = useState("coffee");
+  const [maxDurationMinutes, setMaxDurationMinutes] = useState(30);
+  const [searchRadiusMeters, setSearchRadiusMeters] = useState(10000);
+  const [sortBy, setSortBy] = useState<SortBy>("fairest");
+  const [showMeetingArea, setShowMeetingArea] = useState(true);
+  const [selectedCandidate, setSelectedCandidate] = useState<DestinationCandidate | null>(null);
+  const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
+    people: true,
+    routes: true,
+    areas: true,
+    candidates: true,
   });
-  const [locationQuery, setLocationQuery] = useState("");
+  const [userCoord, setUserCoord] = useState<Location["coord"] | null>(null);
+  const [searchOrigin, setSearchOrigin] = useState<Location["coord"] | null>(null);
 
-  const healthQuery = useQuery({
-    queryKey: ["api-health"],
-    queryFn: async () => {
-      const { data, error } = await openAPIClient.GET("/health");
-      if (error) {
-        throw new Error("Health check failed");
-      }
-      return data;
-    },
-  });
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      return;
+    }
 
-  const activeLocation = activeTargetLocation(activeTarget, participants, destination);
-  const searchCenter = activeLocation?.coord ?? { lat: 40.7004, lng: -73.976 };
-  const trimmedLocationQuery = locationQuery.trim();
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserCoord({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      () => undefined,
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 5000 },
+    );
+  }, []);
 
-  const autocompleteQuery = useQuery({
-    queryKey: ["locations-autocomplete", trimmedLocationQuery, searchCenter.lat, searchCenter.lng],
-    enabled: trimmedLocationQuery.length >= 3,
-    queryFn: async () => {
-      const { data, error } = await openAPIClient.GET("/api/locations/autocomplete", {
-        params: {
-          query: {
-            query: trimmedLocationQuery,
-            lat: searchCenter.lat,
-            lng: searchCenter.lng,
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.error);
-      }
-
-      return data;
-    },
-  });
-
-  const searchMutation = useMutation({
-    mutationFn: async () => {
-      if (trimmedLocationQuery.length === 0) {
-        throw new Error("Enter a place or address first.");
-      }
-
-      const { data, error } = await openAPIClient.GET("/api/locations/search", {
-        params: {
-          query: {
-            query: trimmedLocationQuery,
-            lat: searchCenter.lat,
-            lng: searchCenter.lng,
-            radiusMeters: 10000,
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.error);
-      }
-
-      return data;
-    },
-  });
+  const activeLocation = activeTargetLocation(activeTarget, participants);
+  const searchCenter =
+    activeLocation?.coord ?? estimateTarget?.coord ?? searchOrigin ?? userCoord ?? { lat: 39.8283, lng: -98.5795 };
+  const selectedCandidateId = selectedCandidate ? candidateKey(selectedCandidate) : null;
 
   const estimateMutation = useMutation({
-    mutationFn: async (request: MeetingRequest) => {
+    mutationFn: async (request: components["schemas"]["MeetingRequest"]) => {
       const { data, error } = await openAPIClient.POST("/api/meeting/estimate", {
         body: request,
       });
@@ -124,7 +69,7 @@ function HomePage() {
   });
 
   const routesMutation = useMutation({
-    mutationFn: async (request: MeetingRequest) => {
+    mutationFn: async (request: components["schemas"]["MeetingRequest"]) => {
       const { data, error } = await openAPIClient.POST("/api/meeting/routes", {
         body: request,
       });
@@ -137,13 +82,52 @@ function HomePage() {
     },
   });
 
-  const reverseGeocodeMutation = useMutation({
-    mutationFn: async ({ point, target }: { point: Location; target: ActiveTarget }) => {
-      const { data, error } = await openAPIClient.GET("/api/locations/reverse", {
+  const meetingAreaMutation = useMutation({
+    mutationFn: async (request: components["schemas"]["MeetingAreaRequest"]) => {
+      const { data, error } = await openAPIClient.POST("/api/meeting/area", {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.error);
+      }
+
+      return data;
+    },
+  });
+
+  const destinationSearchMutation = useMutation({
+    mutationFn: async (request: components["schemas"]["DestinationSearchRequest"]) => {
+      const { data, error } = await openAPIClient.POST("/api/meeting/destinations/search", {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.error);
+      }
+
+      return data;
+    },
+  });
+
+  const nearbyDestinationSearchMutation = useMutation({
+    mutationFn: async (near: Location["coord"]) => {
+      const query = destinationQuery.trim();
+      if (!query) {
+        throw new Error("Enter what to find first.");
+      }
+
+      if (participants.length === 0) {
+        throw new Error("Add at least one location first.");
+      }
+
+      const { data, error } = await openAPIClient.GET("/api/locations/search", {
         params: {
           query: {
-            lat: point.coord.lat,
-            lng: point.coord.lng,
+            query,
+            lat: near.lat,
+            lng: near.lng,
+            radiusMeters: searchRadiusMeters,
           },
         },
       });
@@ -152,152 +136,315 @@ function HomePage() {
         throw new Error(error.error);
       }
 
-      return { location: data, target };
-    },
-    onSuccess: ({ location, target }) => {
-      setTargetLocation(target, location);
+      const constraints = meetingConstraints(maxDurationMinutes, searchRadiusMeters, sortBy);
+      const candidates = await Promise.all(
+        data.map(async (location) => {
+          const { data: estimate, error: estimateError } = await openAPIClient.POST("/api/meeting/estimate", {
+            body: meetingRequest(participants, location),
+          });
+
+          if (estimateError) {
+            throw new Error(estimateError.error);
+          }
+
+          return {
+            location,
+            estimate,
+            score: scoreEstimate(estimate, sortBy),
+          } satisfies DestinationCandidate;
+        }),
+      );
+
+      return candidates
+        .filter((candidate) => candidate.estimate.maxDurationSeconds <= constraints.maxDurationSeconds)
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 12);
     },
   });
 
   function resetResults() {
+    resetEstimate();
+    destinationSearchMutation.reset();
+    nearbyDestinationSearchMutation.reset();
+  }
+
+  function resetEstimate() {
     estimateMutation.reset();
     routesMutation.reset();
+    setSelectedCandidate(null);
+    setEstimateTarget(null);
   }
 
   function setTargetLocation(target: ActiveTarget, point: Location) {
-    if (target.type === "destination") {
-      setDestination(point);
-    } else {
+    if (target.type === "participant") {
       setParticipants((current) =>
         current.map((participant) =>
           participant.id === target.id ? { ...participant, location: point } : participant,
         ),
       );
+    } else {
+      return;
     }
 
     resetResults();
   }
 
-  function updateTargetLocation(target: ActiveTarget, lat: number, lng: number) {
-    const point: Location = {
-      name: activeTargetLabel(target, participants),
-      address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-      coord: { lat, lng },
-    };
-
-    setTargetLocation(target, point);
-    reverseGeocodeMutation.mutate({ point, target });
+  function selectActiveTarget(target: ActiveTarget) {
+    if (target.type !== "candidate") {
+      setSelectedCandidate(null);
+    }
+    setActiveTarget(target);
   }
 
-  function addParticipant() {
+  function addParticipant(location: Location) {
     const nextIndex = participants.length;
     const id = `person-${Date.now()}`;
     const participant: Participant = {
       id,
-      name: `Person ${nextIndex + 1}`,
+      name: personLetter(nextIndex),
       color: participantColors[nextIndex % participantColors.length],
-      location: {
-        name: `Person ${nextIndex + 1}`,
-        address: "New York",
-        coord: { lat: 40.7004 + nextIndex * 0.01, lng: -73.976 + nextIndex * 0.01 },
-      },
+      location,
     };
 
     setParticipants((current) => [...current, participant]);
     setActiveTarget({ type: "participant", id });
     resetResults();
+    return id;
   }
 
   function removeParticipant(participantId: string) {
     setParticipants((current) => {
-      if (current.length === 1) {
-        return current;
-      }
-
       const next = current.filter((participant) => participant.id !== participantId);
       if (activeTarget.type === "participant" && activeTarget.id === participantId) {
-        setActiveTarget({ type: "participant", id: next[0].id });
+        setActiveTarget(next[0] ? { type: "participant", id: next[0].id } : { type: "none" });
       }
       return next;
     });
     resetResults();
   }
 
-  function renameParticipant(participantId: string, name: string) {
-    setParticipants((current) =>
-      current.map((participant) => (participant.id === participantId ? { ...participant, name } : participant)),
-    );
-    resetResults();
+  async function searchDestinations() {
+    const constraints = meetingConstraints(maxDurationMinutes, searchRadiusMeters, sortBy);
+    const request: components["schemas"]["DestinationSearchRequest"] = {
+      participants: meetingParticipants(participants),
+      query: destinationQuery,
+      constraints,
+      limit: 12,
+    };
+
+    const result = await destinationSearchMutation.mutateAsync(request);
+    resetEstimate();
+    nearbyDestinationSearchMutation.reset();
+
+    if (showMeetingArea) {
+      meetingAreaMutation.mutate({
+        participants: meetingParticipants(participants),
+        constraints,
+      });
+    }
+
+    return result;
   }
 
-  function selectLocation(point: Location) {
-    setTargetLocation(activeTarget, point);
-    setLocationQuery(point.name || point.address);
+  function selectDestinationCandidate(candidate: DestinationCandidate) {
+    const id = candidateKey(candidate);
+    setActiveTarget({ type: "candidate", id });
+    estimateLocation(candidate.location, candidate);
   }
 
-  async function estimateMeetup() {
-    const request = meetingRequest(participants, destination);
-    const estimate = await estimateMutation.mutateAsync(request);
+  function estimateLocation(location: Location, candidate: DestinationCandidate | null = null) {
+    setEstimateTarget(location);
+    setSelectedCandidate(candidate);
+    estimateMutation.reset();
+    routesMutation.reset();
+
+    if (participants.length === 0) {
+      return;
+    }
+
+    const request = meetingRequest(participants, location);
+    estimateMutation.mutate(request);
     routesMutation.mutate(request);
-    return estimate;
+  }
+
+  async function estimateMapPoint(lat: number, lng: number) {
+    const point = mapPointLocation(lat, lng, "Estimate target");
+    setActiveTarget({ type: "none" });
+    estimateLocation(point);
+
+    try {
+      const location = await reverseGeocode(point);
+      setEstimateTarget(location);
+    } catch {
+      // Keep the coordinate fallback when reverse geocoding cannot resolve an address.
+    }
+  }
+
+  function addPersonAtMapPoint(lat: number, lng: number) {
+    const point = mapPointLocation(lat, lng, `Person ${participants.length + 1}`);
+    const id = addParticipant(point);
+    reverseGeocode(point)
+      .then((location) => {
+        setTargetLocation({ type: "participant", id }, location);
+      })
+      .catch(() => undefined);
+  }
+
+  function searchNearbyMapPoint(lat: number, lng: number) {
+    setSearchOrigin({ lat, lng });
+    destinationSearchMutation.reset();
+    resetEstimate();
+    nearbyDestinationSearchMutation.mutate({ lat, lng });
+  }
+
+  function closeEstimateSheet() {
+    resetEstimate();
+    if (activeTarget.type === "candidate") {
+      setActiveTarget({ type: "none" });
+    }
+  }
+
+  function setMapLayer(layer: keyof MapLayerVisibility, visible: boolean) {
+    setMapLayers((current) => ({ ...current, [layer]: visible }));
+  }
+
+  async function reverseGeocode(point: Location) {
+    const { data, error } = await openAPIClient.GET("/api/locations/reverse", {
+      params: {
+        query: {
+          lat: point.coord.lat,
+          lng: point.coord.lng,
+        },
+      },
+    });
+
+    if (error) {
+      throw new Error(error.error);
+    }
+
+    return data;
   }
 
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[400px_1fr]">
-      <MeetupSidebar
+      <MapSidebar
         activeTarget={activeTarget}
         participants={participants}
-        destination={destination}
-        locationQuery={locationQuery}
-        locationResults={searchMutation.data ?? autocompleteQuery.data ?? []}
-        apiMessage={healthQuery.isLoading ? "Checking API..." : healthQuery.data?.message}
-        apiError={healthQuery.error?.message}
-        searchError={(searchMutation.error ?? autocompleteQuery.error)?.message}
-        estimateError={estimateMutation.error?.message}
-        routesError={routesMutation.error?.message}
-        estimate={estimateMutation.data}
-        routes={routesMutation.data}
-        canEstimate={participants.length > 0 && Boolean(destination)}
-        searching={searchMutation.isPending}
-        estimating={estimateMutation.isPending}
-        loadingRoutes={routesMutation.isPending}
-        onActiveTargetChange={setActiveTarget}
-        onLocationQueryChange={(query) => {
-          setLocationQuery(query);
-          searchMutation.reset();
+        searchCenter={searchCenter}
+        meetingAreaError={meetingAreaMutation.error?.message}
+        destinationSearchError={destinationSearchMutation.error?.message ?? nearbyDestinationSearchMutation.error?.message}
+        destinationQuery={destinationQuery}
+        maxDurationMinutes={maxDurationMinutes}
+        searchRadiusMeters={searchRadiusMeters}
+        sortBy={sortBy}
+        showMeetingArea={showMeetingArea}
+        destinationResults={nearbyDestinationSearchMutation.data ?? destinationSearchMutation.data?.destinations ?? []}
+        selectedCandidateId={selectedCandidateId}
+        canSearchDestinations={participants.length > 0 && destinationQuery.trim().length > 0}
+        searchingDestinations={destinationSearchMutation.isPending || nearbyDestinationSearchMutation.isPending}
+        onActiveTargetChange={selectActiveTarget}
+        onDestinationQueryChange={(query) => {
+          setDestinationQuery(query);
+          destinationSearchMutation.reset();
+          nearbyDestinationSearchMutation.reset();
         }}
-        onSearch={() => searchMutation.mutate()}
-        onLocationSelect={selectLocation}
-        onEstimate={() => void estimateMeetup()}
+        onMaxDurationMinutesChange={(minutes) => {
+          setMaxDurationMinutes(minutes);
+          destinationSearchMutation.reset();
+          nearbyDestinationSearchMutation.reset();
+          meetingAreaMutation.reset();
+        }}
+        onSearchRadiusMetersChange={(meters) => {
+          setSearchRadiusMeters(meters);
+          destinationSearchMutation.reset();
+          nearbyDestinationSearchMutation.reset();
+        }}
+        onSortByChange={(nextSortBy) => {
+          setSortBy(nextSortBy);
+          destinationSearchMutation.reset();
+          nearbyDestinationSearchMutation.reset();
+        }}
+        onShowMeetingAreaChange={(show) => {
+          setShowMeetingArea(show);
+          setMapLayer("areas", show);
+        }}
+        onDestinationSearch={() => void searchDestinations()}
+        onDestinationSelect={selectDestinationCandidate}
         onParticipantAdd={addParticipant}
         onParticipantRemove={removeParticipant}
-        onParticipantNameChange={renameParticipant}
       />
-      <MeetupMap
+      <MapView
         activeTarget={activeTarget}
         participants={participants}
-        destination={destination}
+        estimateTarget={estimateTarget}
+        selectedCandidate={selectedCandidate}
+        selectedCandidateId={selectedCandidateId}
+        layers={mapLayers}
+        estimate={estimateMutation.data}
         routes={routesMutation.data}
-        onMapClick={(lat, lng) => updateTargetLocation(activeTarget, lat, lng)}
-        onParticipantDrag={(participantId, lat, lng) =>
-          updateTargetLocation({ type: "participant", id: participantId }, lat, lng)
-        }
-        onDestinationDrag={(lat, lng) => updateTargetLocation({ type: "destination" }, lat, lng)}
+        meetingArea={showMeetingArea ? meetingAreaMutation.data ?? destinationSearchMutation.data?.area : undefined}
+        destinationCandidates={nearbyDestinationSearchMutation.data ?? destinationSearchMutation.data?.destinations ?? []}
+        estimating={estimateMutation.isPending}
+        loadingRoutes={routesMutation.isPending}
+        estimateError={estimateMutation.error?.message}
+        routesError={routesMutation.error?.message}
+        onLayerChange={setMapLayer}
+        onDestinationCandidateSelect={selectDestinationCandidate}
+        onAddPersonHere={addPersonAtMapPoint}
+        onEstimateHere={(lat, lng) => void estimateMapPoint(lat, lng)}
+        onSearchNearby={searchNearbyMapPoint}
+        onEstimateSheetClose={closeEstimateSheet}
       />
     </div>
   );
 }
 
-function meetingRequest(participants: Participant[], destination: Location | null): MeetingRequest {
-  if (!destination) {
-    throw new Error("Set a destination first.");
+function meetingRequest(participants: Participant[], estimateTarget: Location | null): components["schemas"]["MeetingRequest"] {
+  if (!estimateTarget) {
+    throw new Error("Choose an estimate target first.");
   }
 
   return {
-    destination,
-    participants: participants.map((participant) => ({
-      name: participant.name,
-      location: participant.location,
-    })),
+    destination: estimateTarget,
+    participants: meetingParticipants(participants),
+  };
+}
+
+function meetingParticipants(participants: Participant[]) {
+  return participants.map((participant) => ({
+    name: participant.name,
+    location: participant.location,
+  }));
+}
+
+function personLetter(index: number) {
+  return String.fromCharCode(65 + (index % 26));
+}
+
+function meetingConstraints(maxDurationMinutes: number, radiusMeters: number, sortBy: SortBy) {
+  return {
+    maxDurationSeconds: Math.max(1, Math.round(maxDurationMinutes * 60)),
+    radiusMeters,
+    sortBy,
+  };
+}
+
+function scoreEstimate(estimate: components["schemas"]["MeetingEstimate"], sortBy: SortBy) {
+  if (sortBy === "fastest") {
+    return estimate.averageDurationSeconds;
+  }
+
+  if (sortBy === "lowestMaxTime") {
+    return estimate.maxDurationSeconds;
+  }
+
+  return estimate.averageDurationSeconds + estimate.durationSpreadSeconds;
+}
+
+function mapPointLocation(lat: number, lng: number, name: string): Location {
+  return {
+    name,
+    address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+    coord: { lat, lng },
   };
 }

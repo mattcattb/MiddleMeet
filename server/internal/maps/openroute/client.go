@@ -26,6 +26,10 @@ func NewClient(apiKey string) *OpenRouteClient {
 }
 
 func (or *OpenRouteClient) postJson(path string, body any, out any) error {
+	return or.postJsonAccept(path, body, out, "application/json")
+}
+
+func (or *OpenRouteClient) postJsonAccept(path string, body any, out any, accept string) error {
 
 	endpoint, err := url.Parse(openRouteBaseURL + "/v2" + path)
 
@@ -44,7 +48,7 @@ func (or *OpenRouteClient) postJson(path string, body any, out any) error {
 		return err
 	}
 
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", accept)
 	req.Header.Add("Authorization", or.ApiKey)
 	req.Header.Add("Content-Type", "application/json; charset=utf-8")
 

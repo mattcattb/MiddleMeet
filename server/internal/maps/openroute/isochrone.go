@@ -29,7 +29,7 @@ func (or *OpenRouteClient) BuildIsochrone(origin geo.Location, maxDurationSecond
 	}
 
 	var resp isochromeResponse
-	if err := or.postJson("/isochrones/driving-car", reqBody, &resp); err != nil {
+	if err := or.postJsonAccept("/isochrones/driving-car", reqBody, &resp, "application/geo+json"); err != nil {
 		return geo.Polygon{}, err
 	}
 
