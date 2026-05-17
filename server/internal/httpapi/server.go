@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Port            string
 	OpenRouteAPIKey string
+	RedisUrl        string
 	CORSOrigins     []string
 }
 

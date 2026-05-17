@@ -8,11 +8,17 @@ import (
 	"strings"
 	"time"
 
+	"middle-meetup-server/internal/cache"
 	"middle-meetup-server/internal/httpapi"
 	"middle-meetup-server/internal/location"
+	"middle-meetup-server/internal/maps"
 	"middle-meetup-server/internal/maps/openroute"
 	"middle-meetup-server/internal/meeting"
+
+	"github.com/redis/go-redis/v9"
 )
+
+const defaultRedisURL = "redis://localhost:16379/0"
 
 func main() {
 	port := os.Getenv("PORT")
@@ -21,6 +27,11 @@ func main() {
 	}
 
 	openRouteApiKey := os.Getenv("OPENROUTE_API_KEY")
+	redisUrl := os.Getenv("REDIS_URL")
+
+	if redisUrl == "" {
+		redisUrl = defaultRedisURL
+	}
 
 	if openRouteApiKey == "" {
 		fmt.Println("OPENROUTE_API_KEY is not set")
@@ -33,10 +44,20 @@ func main() {
 		CORSOrigins:     splitEnvList(os.Getenv("CORS_ORIGINS")),
 	}
 
-	openrouteClient := openroute.NewClient(openRouteApiKey)
+	opt, err := redis.ParseURL(redisUrl)
 
-	meetingPlanner := meeting.NewPlanner(openrouteClient, openrouteClient, openrouteClient)
-	locationService := location.NewService(openrouteClient)
+	if err != nil {
+		fmt.Println("Error occured parsing REDIS_URL, %w", err)
+		return
+	}
+	redisClient := redis.NewClient(opt)
+	cache := cache.NewRedisCache(redisClient)
+
+	openrouteClient := openroute.NewClient(openRouteApiKey)
+	mapsCacheClient := maps.NewCachedClient(openrouteClient, cache)
+
+	meetingPlanner := meeting.NewPlanner(mapsCacheClient, mapsCacheClient, mapsCacheClient)
+	locationService := location.NewService(mapsCacheClient)
 
 	application := httpapi.NewServer(httpapi.Application{
 		Config:         config,
