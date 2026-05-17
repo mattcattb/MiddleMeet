@@ -103,8 +103,14 @@ export function LocationSearch({
             throw new Error(error.error);
           }
 
-          setQuery(data.address || data.name || "Current location");
-          onLocationSelect(data);
+          const exactLocation = {
+            ...data,
+            address: data.address || point.address,
+            coord: point.coord,
+          };
+
+          setQuery(exactLocation.address || exactLocation.name || "Current location");
+          onLocationSelect(exactLocation);
         } catch {
           setQuery("Current location");
           onLocationSelect(point);
