@@ -1,6 +1,6 @@
-# middle-meetup
+# Middle-Where?
 
-Middle Meetup helps a group compare meeting locations by travel time instead of raw distance. The app takes participant locations, estimates routes through a Go API, and renders candidate destinations and route context in a React map interface.
+Middle-Where? helps a group compare meeting locations by travel time instead of raw distance. The app takes participant locations, estimates routes through a Go API, and renders candidate destinations and route context in a React map interface.
 
 This repository is intentionally small, but it is structured like a real full-stack app: a typed frontend client, a standalone backend, external map provider boundaries, local development scripts, and CI checks for backend tests.
 

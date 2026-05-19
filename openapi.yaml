@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Middle Meetup API
+  title: Middle-Where? API
   version: 0.1.0
 paths:
   /health:

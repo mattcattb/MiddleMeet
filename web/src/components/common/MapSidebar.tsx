@@ -65,7 +65,7 @@ export function MapSidebar({
     <aside className="border-b border-border bg-card lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
       <div className="space-y-5 p-4 lg:p-5">
         <div className="space-y-3">
-          <h1 className="text-xl font-semibold tracking-tight">Middle Meetup</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Middle-Where?</h1>
           <div className="grid grid-cols-3 gap-1.5 text-xs text-muted-foreground">
             <FlowStep icon={MapPin} label="Add" />
             <FlowStep icon={Search} label="Find" />

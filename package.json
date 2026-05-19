@@ -1,5 +1,5 @@
 {
-  "name": "middle-meetup",
+  "name": "middle-where",
   "private": true,
   "scripts": {
     "dev": "bun run dev:web",
