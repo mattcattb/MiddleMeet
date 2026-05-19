@@ -1,3 +1,5 @@
+import { MapPin, MapPinned, Route, Store } from "lucide-react";
+import { Button, Tooltip } from "../ui";
 import type { MapLayerVisibility } from "./types";
 
 export function MapLayerControls({
@@ -8,29 +10,32 @@ export function MapLayerControls({
   onLayerChange: (layer: keyof MapLayerVisibility, visible: boolean) => void;
 }) {
   return (
-    <div className="absolute left-4 top-4 z-[1000] flex gap-1 border border-border bg-surface-elevated/95 p-1 shadow-xl">
-      {Object.entries(layerLabels).map(([key, label]) => {
+    <div className="absolute left-4 top-4 z-[1000] flex gap-1 rounded-lg border border-border bg-card/95 p-1 shadow-xl backdrop-blur">
+      {Object.entries(layerMeta).map(([key, meta]) => {
         const layer = key as keyof MapLayerVisibility;
+        const Icon = meta.icon;
         return (
-          <button
-            key={key}
-            type="button"
-            className={`h-8 px-2 text-xs font-medium ${
-              layers[layer] ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => onLayerChange(layer, !layers[layer])}
-          >
-            {label}
-          </button>
+          <Tooltip key={key} content={meta.label}>
+            <Button
+              type="button"
+              size="icon"
+              variant={layers[layer] ? "default" : "ghost"}
+              className="h-8 w-8"
+              onClick={() => onLayerChange(layer, !layers[layer])}
+              aria-label={`${layers[layer] ? "Hide" : "Show"} ${meta.label}`}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
+          </Tooltip>
         );
       })}
     </div>
   );
 }
 
-const layerLabels: Record<keyof MapLayerVisibility, string> = {
-  people: "Locations",
-  routes: "Routes",
-  areas: "Areas",
-  candidates: "Places",
+const layerMeta = {
+  people: { label: "Locations", icon: MapPin },
+  routes: { label: "Routes", icon: Route },
+  areas: { label: "Areas", icon: MapPinned },
+  candidates: { label: "Estimates", icon: Store },
 };

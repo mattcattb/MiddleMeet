@@ -1,5 +1,7 @@
 import { LocationSearch } from "./LocationSearch";
 import { PersonCard } from "./PersonCard";
+import { Button } from "../ui";
+import { MapPin, Plus } from "lucide-react";
 import type { ActiveTarget, Location, Participant } from "./types";
 
 export function PeoplePanel({
@@ -19,8 +21,11 @@ export function PeoplePanel({
 }) {
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-medium">Locations</div>
+      <div className="flex items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/12 text-primary">
+          <MapPin className="h-4 w-4" />
+        </span>
+        <div className="text-sm font-semibold">Locations</div>
       </div>
 
       <div className="space-y-2">
@@ -35,16 +40,16 @@ export function PeoplePanel({
           />
         ))}
 
-        <div className="grid grid-cols-[auto_1fr] items-center gap-2 border border-border bg-background px-3 transition-colors focus-within:border-primary hover:border-primary/70">
-          <span className="flex h-7 w-7 items-center justify-center text-lg leading-none text-muted-foreground">
-            +
-          </span>
+        <div className="grid grid-cols-[auto_1fr] items-center gap-2 border border-dashed border-primary/40 px-2 py-1.5 transition-colors focus-within:border-primary hover:border-primary/70">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-primary" tabIndex={-1} aria-label="Add location">
+            <Plus className="h-4 w-4" />
+          </Button>
           <LocationSearch
             key={participants.length}
             searchCenter={searchCenter}
-            placeholder="Enter new location"
+            placeholder={participants.length === 0 ? "Start with a location" : "Add another location"}
             className="min-w-0"
-            inputClassName="border-0 bg-transparent px-0 text-muted-foreground placeholder:text-muted-foreground focus:border-0"
+            inputClassName="border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
             allowCurrentLocation
             onLocationSelect={onParticipantAdd}
           />

@@ -1,4 +1,5 @@
 import { Button } from "../ui";
+import { X } from "lucide-react";
 import type { Participant } from "./types";
 
 export function PersonCard({
@@ -18,8 +19,8 @@ export function PersonCard({
 
   return (
     <article
-      className={`border px-2 py-2 text-sm ${
-        active ? "border-transparent bg-transparent" : "border-border bg-muted"
+      className={`border px-2 py-2 text-sm transition-colors ${
+        active ? "border-primary bg-primary/5" : "border-border bg-transparent hover:border-primary/40"
       }`}
       onClick={onSelect}
     >
@@ -30,14 +31,14 @@ export function PersonCard({
         >
           {label}
         </span>
-        <button type="button" className="block min-w-0 truncate text-left text-muted-foreground" onClick={onSelect}>
+        <button type="button" className="block min-w-0 truncate text-left text-muted-foreground hover:text-foreground" onClick={onSelect}>
           {locationLabel}
         </button>
         <Button
           type="button"
-          size="sm"
+          size="icon"
           variant="ghost"
-          className="h-8 w-8 px-0 text-danger hover:bg-danger/15"
+          className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={(event) => {
             event.stopPropagation();
             onRemove();
@@ -45,9 +46,7 @@ export function PersonCard({
           aria-label={`Remove location ${label}`}
           title="Remove location"
         >
-          <span aria-hidden="true" className="text-lg leading-none">
-            ×
-          </span>
+          <X className="h-4 w-4" />
         </Button>
       </div>
     </article>

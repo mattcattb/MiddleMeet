@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { divIcon, type LatLngExpression, type PathOptions } from "leaflet";
-import { CircleMarker, MapContainer, Marker, Polygon, Polyline, Popup, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Polygon, Polyline, Popup, TileLayer, Tooltip, ZoomControl, useMap, useMapEvents } from "react-leaflet";
+import { MapPin, Maximize2, Minimize2, Search } from "lucide-react";
+import { Button } from "../ui";
 import { EstimateSheet } from "./EstimateSheet";
 import { candidateKey } from "./ResultsPanel";
 import { MapLayerControls } from "./MapLayerControls";
@@ -21,23 +23,7 @@ const mapCenter = [39.8283, -98.5795] satisfies LatLngExpression;
 const tileLayer = {
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
-};
-
-const candidateStyle: PathOptions = {
-  color: destinationColor,
-  fillColor: destinationColor,
-  fillOpacity: 0.62,
-  opacity: 1,
-  weight: 3,
-};
-
-const selectedCandidateStyle: PathOptions = {
-  color: "#fff7ed",
-  fillColor: destinationColor,
-  fillOpacity: 0.85,
-  opacity: 1,
-  weight: 4,
+  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
 };
 
 export function MapView({
@@ -97,13 +83,15 @@ export function MapView({
 
   return (
     <div className={expanded ? "fixed inset-0 z-[900] bg-background" : "relative h-[560px] bg-background lg:h-full"}>
-      <button
+      <Button
         type="button"
-        className="absolute right-4 top-4 z-[1000] border border-border bg-surface-elevated/95 px-3 py-2 text-sm font-medium shadow-xl hover:border-primary hover:bg-muted"
+        variant="secondary"
+        className="absolute right-4 top-4 z-[1000] bg-card/95 shadow-xl backdrop-blur"
         onClick={() => setExpanded((current) => !current)}
       >
+        {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         {expanded ? "Exit full map" : "Full map"}
-      </button>
+      </Button>
       <MapLayerControls layers={layers} onLayerChange={onLayerChange} />
       <EstimateSheet
         target={estimateTarget}
@@ -116,8 +104,15 @@ export function MapView({
         routesError={routesError}
         onClose={onEstimateSheetClose}
       />
-      <MapContainer center={mapCenter} zoom={4} className="h-full w-full bg-background">
+      <MapContainer
+        center={mapCenter}
+        zoom={4}
+        zoomControl={false}
+        markerZoomAnimation={false}
+        className="h-full w-full bg-background"
+      >
         <TileLayer attribution={tileLayer.attribution} url={tileLayer.url} />
+        <ZoomControl position="bottomright" />
         <MapResizeWatcher watch={expanded} />
         <MapInteractionHandler onMapClick={handleMapClick} onMapMoveStart={() => setActionMenu(null)} />
         <UserLocationCenter enabled={participants.length === 0 && !estimateTarget} />
@@ -170,7 +165,7 @@ export function MapView({
 
         <PointMarker
           active={Boolean(estimateTarget)}
-          point={estimateTarget}
+          point={selectedCandidate ? null : estimateTarget}
           label="Estimate"
           color={destinationColor}
           draggable
@@ -238,9 +233,7 @@ function ActiveTargetFocus({
       return;
     }
 
-    map.flyTo([focusLocation.coord.lat, focusLocation.coord.lng], Math.max(map.getZoom(), 13), {
-      duration: 0.45,
-    });
+    map.setView([focusLocation.coord.lat, focusLocation.coord.lng], Math.max(map.getZoom(), 13), { animate: false });
   }, [focusLocation, map]);
 
   return null;
@@ -328,26 +321,25 @@ function CandidateLayer({
 }) {
   return (
     <>
-      {candidates.map((candidate) => {
+      {candidates.map((candidate, index) => {
         const id = candidateKey(candidate);
         const active = id === selectedCandidateId;
         return (
-          <CircleMarker
+          <Marker
             key={id}
-            center={[candidate.location.coord.lat, candidate.location.coord.lng]}
+            icon={estimateIcon(index + 1, active)}
+            position={[candidate.location.coord.lat, candidate.location.coord.lng]}
             eventHandlers={{
               click(event) {
                 event.originalEvent.stopPropagation();
                 onSelect(candidate);
               },
             }}
-            pathOptions={active ? selectedCandidateStyle : candidateStyle}
-            radius={active ? 11 : 8}
           >
             <Tooltip direction="top" opacity={0.95}>
-              {candidate.location.name || "Destination"} · {Math.round(candidate.estimate.averageDurationSeconds / 60)} min avg
+              E{index + 1} · {candidate.location.name || "Destination"} · {Math.round(candidate.estimate.averageDurationSeconds / 60)} min avg
             </Tooltip>
-          </CircleMarker>
+          </Marker>
         );
       })}
     </>
@@ -399,20 +391,29 @@ function MapActionMenu({
         radius={5}
       />
       <Popup position={[menu.lat, menu.lng]} closeButton={false} closeOnClick={false} autoPan={false}>
-        <div className="w-40 text-sm">
-          <button type="button" className="block w-full px-2 py-2 text-left hover:bg-muted" onClick={onAddPersonHere}>
-            Add location here
+        <div className="w-48 rounded-md bg-popover p-1 text-sm text-popover-foreground">
+          <button type="button" className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-accent hover:text-accent-foreground" onClick={onAddPersonHere}>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/12 text-primary">
+              <MapPin className="h-3.5 w-3.5" />
+            </span>
+            Location here
           </button>
           <button
             type="button"
-            className="block w-full px-2 py-2 text-left hover:bg-muted disabled:text-muted-foreground"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
             onClick={onEstimateHere}
             disabled={!canEstimate}
           >
+            <span className="flex h-6 w-7 items-center justify-center rounded-md bg-orange-400 text-xs font-bold text-orange-50">
+              E
+            </span>
             Estimate here
           </button>
-          <button type="button" className="block w-full px-2 py-2 text-left hover:bg-muted" onClick={onSearchNearby}>
-            Search nearby
+          <button type="button" className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left hover:bg-accent hover:text-accent-foreground" onClick={onSearchNearby}>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+              <Search className="h-3.5 w-3.5" />
+            </span>
+            Find nearby
           </button>
         </div>
       </Popup>
@@ -469,12 +470,27 @@ function markerIcon(color: string, active: boolean) {
   const size = active ? 26 : 18;
   const border = active ? 4 : 3;
   const shadow = active
-    ? "0 0 0 3px rgba(45,212,191,.42),0 8px 20px rgba(0,0,0,.35)"
-    : "0 0 0 2px rgba(255,255,255,.95),0 5px 14px rgba(0,0,0,.28)";
+    ? "0 0 0 3px rgba(20,184,166,.28),0 8px 20px rgba(15,23,42,.22)"
+    : "0 0 0 2px rgba(255,255,255,.95),0 5px 14px rgba(15,23,42,.18)";
 
   return divIcon({
     className: "",
-    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:999px;background:${color};border:${border}px solid #0f172a;box-shadow:${shadow};"></span>`,
+    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:999px;background:${color};border:${border}px solid white;box-shadow:${shadow};"></span>`,
+    iconAnchor: [size / 2, size / 2],
+    iconSize: [size, size],
+  });
+}
+
+function estimateIcon(index: number, active: boolean) {
+  const size = active ? 34 : 30;
+  const label = `E${index}`;
+  const shadow = active
+    ? "0 0 0 3px rgba(251,146,60,.28),0 8px 22px rgba(15,23,42,.24)"
+    : "0 0 0 2px rgba(255,255,255,.96),0 5px 14px rgba(15,23,42,.18)";
+
+  return divIcon({
+    className: "",
+    html: `<span style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:8px;background:${destinationColor};border:3px solid white;box-shadow:${shadow};color:#fff7ed;font:700 12px/1 var(--font-body);">${label}</span>`,
     iconAnchor: [size / 2, size / 2],
     iconSize: [size, size],
   });

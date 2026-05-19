@@ -23,6 +23,7 @@ function HomePage() {
   const [sortBy, setSortBy] = useState<SortBy>("fairest");
   const [showMeetingArea, setShowMeetingArea] = useState(true);
   const [selectedCandidate, setSelectedCandidate] = useState<DestinationCandidate | null>(null);
+  const [meetupOptions, setMeetupOptions] = useState<DestinationCandidate[]>([]);
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
     people: true,
     routes: true,
@@ -183,6 +184,10 @@ function HomePage() {
     midpointMutation.reset();
   }
 
+  function clearMeetupOptions() {
+    setMeetupOptions([]);
+  }
+
   function resetEstimate() {
     estimateMutation.reset();
     routesMutation.reset();
@@ -202,6 +207,7 @@ function HomePage() {
     }
 
     resetResults();
+    clearMeetupOptions();
   }
 
   function selectActiveTarget(target: ActiveTarget) {
@@ -224,6 +230,7 @@ function HomePage() {
     setParticipants((current) => [...current, participant]);
     setActiveTarget({ type: "participant", id });
     resetResults();
+    clearMeetupOptions();
     return id;
   }
 
@@ -236,6 +243,7 @@ function HomePage() {
       return next;
     });
     resetResults();
+    clearMeetupOptions();
   }
 
   async function searchDestinations() {
@@ -251,6 +259,7 @@ function HomePage() {
     resetEstimate();
     nearbyDestinationSearchMutation.reset();
     midpointMutation.reset();
+    addMeetupOptions(result.destinations);
 
     if (showMeetingArea) {
       meetingAreaMutation.mutate({
@@ -272,6 +281,7 @@ function HomePage() {
     resetEstimate();
     destinationSearchMutation.reset();
     nearbyDestinationSearchMutation.reset();
+    addMeetupOptions(result.candidates);
     setMapLayer("areas", showMeetingArea);
     return result;
   }
@@ -293,20 +303,33 @@ function HomePage() {
     }
 
     const request = meetingRequest(participants, location);
-    estimateMutation.mutate(request);
+    estimateMutation.mutate(request, {
+      onSuccess(estimate) {
+        const nextCandidate = {
+          location,
+          estimate,
+          score: scoreEstimate(estimate, sortBy),
+        } satisfies DestinationCandidate;
+
+        addMeetupOptions([nextCandidate]);
+        if (!candidate) {
+          setSelectedCandidate(nextCandidate);
+          setActiveTarget({ type: "candidate", id: candidateKey(nextCandidate) });
+        }
+      },
+    });
     routesMutation.mutate(request);
   }
 
   async function estimateMapPoint(lat: number, lng: number) {
     const point = mapPointLocation(lat, lng, "Estimate target");
     setActiveTarget({ type: "none" });
-    estimateLocation(point);
 
     try {
       const location = await reverseGeocode(point);
-      setEstimateTarget(location);
+      estimateLocation(location);
     } catch {
-      // Keep the coordinate fallback when reverse geocoding cannot resolve an address.
+      estimateLocation(point);
     }
   }
 
@@ -324,7 +347,14 @@ function HomePage() {
     setSearchOrigin({ lat, lng });
     destinationSearchMutation.reset();
     resetEstimate();
-    nearbyDestinationSearchMutation.mutate({ lat, lng });
+    nearbyDestinationSearchMutation.mutate(
+      { lat, lng },
+      {
+        onSuccess(candidates) {
+          addMeetupOptions(candidates);
+        },
+      },
+    );
   }
 
   function closeEstimateSheet() {
@@ -336,6 +366,21 @@ function HomePage() {
 
   function setMapLayer(layer: keyof MapLayerVisibility, visible: boolean) {
     setMapLayers((current) => ({ ...current, [layer]: visible }));
+  }
+
+  function addMeetupOptions(candidates: DestinationCandidate[]) {
+    if (candidates.length === 0) {
+      return;
+    }
+
+    setMeetupOptions((current) => {
+      const byKey = new Map(current.map((candidate) => [candidateKey(candidate), candidate]));
+      for (const candidate of candidates) {
+        byKey.set(candidateKey(candidate), candidate);
+      }
+
+      return Array.from(byKey.values()).sort((a, b) => a.score - b.score);
+    });
   }
 
   async function reverseGeocode(point: Location) {
@@ -356,7 +401,7 @@ function HomePage() {
   }
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-[400px_1fr]">
+    <div className="grid min-h-screen bg-background lg:grid-cols-[390px_1fr]">
       <MapSidebar
         activeTarget={activeTarget}
         participants={participants}
@@ -373,10 +418,7 @@ function HomePage() {
         sortBy={sortBy}
         showMeetingArea={showMeetingArea}
         destinationResults={
-          midpointMutation.data?.candidates ??
-          nearbyDestinationSearchMutation.data ??
-          destinationSearchMutation.data?.destinations ??
-          []
+          meetupOptions
         }
         selectedCandidateId={selectedCandidateId}
         canSearchDestinations={participants.length > 0 && destinationQuery.trim().length > 0}
@@ -426,14 +468,11 @@ function HomePage() {
         selectedCandidate={selectedCandidate}
         selectedCandidateId={selectedCandidateId}
         layers={mapLayers}
-        estimate={estimateMutation.data}
+        estimate={selectedCandidate?.estimate ?? estimateMutation.data}
         routes={routesMutation.data}
         meetingArea={showMeetingArea ? midpointMutation.data?.area ?? meetingAreaMutation.data ?? destinationSearchMutation.data?.area : undefined}
         destinationCandidates={
-          midpointMutation.data?.candidates ??
-          nearbyDestinationSearchMutation.data ??
-          destinationSearchMutation.data?.destinations ??
-          []
+          meetupOptions
         }
         estimating={estimateMutation.isPending}
         loadingRoutes={routesMutation.isPending}

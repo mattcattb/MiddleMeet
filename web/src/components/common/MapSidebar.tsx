@@ -1,3 +1,4 @@
+import { Clock3, MapPin, Search, type LucideIcon } from "lucide-react";
 import { MeetupSearchPanel } from "./MeetupSearchPanel";
 import { PeoplePanel } from "./PeoplePanel";
 import { ResultsPanel } from "./ResultsPanel";
@@ -61,10 +62,15 @@ export function MapSidebar({
   onParticipantRemove: (participantId: string) => void;
 }) {
   return (
-    <aside className="border-b border-border bg-surface-elevated lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
-      <div className="space-y-4 p-4">
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Middle Meetup</h2>
+    <aside className="border-b border-border bg-card lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      <div className="space-y-5 p-4 lg:p-5">
+        <div className="space-y-3">
+          <h1 className="text-xl font-semibold tracking-tight">Middle Meetup</h1>
+          <div className="grid grid-cols-3 gap-1.5 text-xs text-muted-foreground">
+            <FlowStep icon={MapPin} label="Add" />
+            <FlowStep icon={Search} label="Find" />
+            <FlowStep icon={Clock3} label="Compare" />
+          </div>
         </div>
 
         <PeoplePanel
@@ -109,5 +115,14 @@ export function MapSidebar({
 }
 
 function ErrorMessage({ message }: { message: string }) {
-  return <div className="border border-danger/50 bg-danger/15 px-3 py-2 text-sm text-danger">{message}</div>;
+  return <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{message}</div>;
+}
+
+function FlowStep({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 border border-border py-1.5">
+      <Icon className="h-3.5 w-3.5" />
+      <span>{label}</span>
+    </div>
+  );
 }
