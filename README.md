@@ -4,6 +4,14 @@ Middle-Where? helps a group compare meeting locations by travel time instead of 
 
 This repository is intentionally small, but it is structured like a real full-stack app: a typed frontend client, a standalone backend, external map provider boundaries, local development scripts, and CI checks for backend tests.
 
+![Middle-Where? app showing participant locations, route context, and candidate meeting spots](docs/image.png)
+
+## App Overview
+
+Middle-Where? starts with a map-first workflow: add each participant location, search for a destination category, and compare candidate meeting spots by estimated travel time. The sidebar keeps the participant list, search controls, and estimate details close to the map so the app can show location markers, route lines, reachable areas, and ranked destinations in one view.
+
+The example above shows the core experience: multiple people are plotted on the map, the app searches for nearby meeting options, and the results panel highlights travel-time tradeoffs so a group can pick a fair location without manually comparing routes in separate map tabs.
+
 ## Stack
 
 - **Backend**: Go, standard library `net/http`, package-level domain logic, OpenRouteService client integration, Redis-backed map response caching.
