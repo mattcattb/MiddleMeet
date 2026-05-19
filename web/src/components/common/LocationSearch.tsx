@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { openAPIClient } from "../../lib/openapi";
+import { Button, Input, Label } from "../ui";
+import { LocateFixed } from "lucide-react";
+import { cn } from "../../lib/cn";
 import type { Location } from "./types";
 
 export function LocationSearch({
@@ -135,10 +138,10 @@ export function LocationSearch({
       Boolean(currentLocationError));
 
   return (
-    <div ref={searchRef} className={`relative ${className}`}>
-      {label ? <div className="text-sm font-medium">{label}</div> : null}
-      <input
-        className={`h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-primary ${inputClassName}`}
+    <div ref={searchRef} className={cn("relative space-y-2", className)}>
+      {label ? <Label>{label}</Label> : null}
+      <Input
+        className={inputClassName}
         value={query}
         onFocus={() => setOpen(true)}
         onChange={(event) => {
@@ -157,25 +160,27 @@ export function LocationSearch({
         autoFocus={autoFocus}
       />
       {autocompleteQuery.isFetching ? (
-        <div className="absolute right-2 top-2.5 text-xs text-muted-foreground">Searching...</div>
+        <div className="absolute right-2 top-9 text-xs text-muted-foreground">Searching...</div>
       ) : null}
       {showMenu ? (
-        <div className="absolute left-0 right-0 top-full z-[1000] mt-1 max-h-56 overflow-y-auto border border-border bg-surface-elevated shadow-xl">
+        <div className="absolute left-0 right-0 top-full z-[1000] mt-1 max-h-64 overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-xl">
           {allowCurrentLocation ? (
-            <button
+            <Button
               type="button"
-              className="w-full border-b border-border bg-surface-elevated px-3 py-2 text-left text-sm font-medium hover:bg-success/10"
+              variant="ghost"
+              className="h-auto w-full justify-start px-3 py-2 text-left text-sm font-medium hover:bg-success/10"
               onClick={selectCurrentLocation}
               disabled={currentLocationLoading}
             >
+              <LocateFixed className="h-4 w-4 text-success" />
               {currentLocationLoading ? "Finding current location..." : "Use current location"}
-            </button>
+            </Button>
           ) : null}
           {autocompleteQuery.data?.map((point) => (
             <button
               key={`${point.coord.lat}-${point.coord.lng}-${point.address}`}
               type="button"
-              className="w-full border border-border bg-muted px-3 py-2 text-left text-sm hover:border-primary hover:bg-primary/10"
+              className="w-full rounded-sm px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
               onClick={() => {
                 setQuery(point.name || point.address);
                 setOpen(false);
@@ -183,7 +188,7 @@ export function LocationSearch({
               }}
             >
               <div className="font-medium">{point.name || "Unnamed location"}</div>
-              <div className="text-muted-foreground">{point.address}</div>
+              <div className="line-clamp-2 text-muted-foreground">{point.address}</div>
             </button>
           ))}
           {autocompleteQuery.error ? <ErrorMessage message={autocompleteQuery.error.message} /> : null}
@@ -195,5 +200,5 @@ export function LocationSearch({
 }
 
 function ErrorMessage({ message }: { message: string }) {
-  return <div className="border border-danger/50 bg-danger/15 px-3 py-2 text-sm text-danger">{message}</div>;
+  return <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{message}</div>;
 }

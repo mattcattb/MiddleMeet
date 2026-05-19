@@ -1,6 +1,19 @@
-import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Button } from "../ui";
+import { Clock3, Crosshair, MapPinned, Search, SlidersHorizontal } from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+} from "../ui";
 import type { SortBy } from "./types";
 
 export function MeetupSearchPanel({
@@ -39,9 +52,17 @@ export function MeetupSearchPanel({
   onFindMidpoint: () => void;
 }) {
   return (
-    <section className="space-y-3 border-t border-border pt-4">
+    <section className="space-y-3 rounded-lg border border-border bg-background/70 p-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-sm font-medium">Find meetup spots</div>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-7 w-8 items-center justify-center rounded-md bg-orange-400 text-xs font-bold text-orange-50">
+            E
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold">Meetup estimates</div>
+            <div className="truncate text-xs text-muted-foreground">{canSearchDestinations ? "Find or solve possible spots." : "Add locations first."}</div>
+          </div>
+        </div>
         <Button
           type="button"
           size="sm"
@@ -50,15 +71,17 @@ export function MeetupSearchPanel({
           onClick={onFindMidpoint}
           disabled={!canFindMidpoint || findingMidpoint}
         >
+          <Crosshair className="h-3.5 w-3.5" />
           {findingMidpoint ? "Solving" : "Midpoint"}
         </Button>
       </div>
       <div className="flex gap-2">
-        <input
-          className="h-10 min-w-0 flex-1 border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+        <Input
+          className="min-w-0 flex-1"
           value={destinationQuery}
           onChange={(event) => onDestinationQueryChange(event.target.value)}
           placeholder="Coffee, pizza, park"
+          disabled={!canSearchDestinations}
           onKeyDown={(event) => {
             if (event.key === "Enter" && canSearchDestinations && !searchingDestinations) {
               onDestinationSearch();
@@ -67,126 +90,117 @@ export function MeetupSearchPanel({
         />
         <Button
           type="button"
-          size="sm"
           className="h-10 shrink-0"
           onClick={onDestinationSearch}
           disabled={!canSearchDestinations || searchingDestinations}
         >
+          <Search className="h-4 w-4" />
           {searchingDestinations ? "Finding" : "Find"}
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <FilterPopover label={formatDuration(maxDurationMinutes)}>
-          <label className="space-y-1 text-xs text-muted-foreground">
-            Max travel time
-            <select
-              className="h-9 w-full border border-border bg-background px-2 text-sm text-foreground outline-none focus:border-primary"
-              value={maxDurationMinutes}
-              onChange={(event) => onMaxDurationMinutesChange(Number(event.target.value))}
-            >
-              <option value={5}>5 min</option>
-              <option value={15}>15 min</option>
-              <option value={30}>30 min</option>
-              <option value={60}>1 hour</option>
-            </select>
-          </label>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Clock3 className="h-3.5 w-3.5" />
+              Max travel time
+            </Label>
+            <Select value={String(maxDurationMinutes)} onValueChange={(value) => onMaxDurationMinutesChange(Number(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 min</SelectItem>
+                <SelectItem value="15">15 min</SelectItem>
+                <SelectItem value="30">30 min</SelectItem>
+                <SelectItem value="60">1 hour</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </FilterPopover>
 
         <FilterPopover label={formatRadius(searchRadiusMeters)}>
-          <div className="space-y-2">
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Search radius
-              <select
-                className="h-9 w-full border border-border bg-background px-2 text-sm text-foreground outline-none focus:border-primary"
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Search radius</Label>
+              <Select
                 value={radiusPresetValue(searchRadiusMeters)}
-                onChange={(event) => {
-                  if (event.target.value === "custom") {
+                onValueChange={(value) => {
+                  if (value === "custom") {
                     return;
                   }
 
-                  onSearchRadiusMetersChange(milesToMeters(Number(event.target.value)));
+                  onSearchRadiusMetersChange(milesToMeters(Number(value)));
                 }}
               >
-                <option value={5}>5 mi</option>
-                <option value={10}>10 mi</option>
-                <option value={25}>25 mi</option>
-                <option value={50}>50 mi</option>
-                <option value="custom">Custom</option>
-              </select>
-            </label>
-            <label className="space-y-1 text-xs text-muted-foreground">
-              Custom miles
-              <input
-                className="h-9 w-full border border-border bg-background px-2 text-sm text-foreground outline-none focus:border-primary"
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 mi</SelectItem>
+                  <SelectItem value="10">10 mi</SelectItem>
+                  <SelectItem value="25">25 mi</SelectItem>
+                  <SelectItem value="50">50 mi</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Custom miles</Label>
+              <Input
                 min={1}
                 step={1}
                 type="number"
                 value={metersToMiles(searchRadiusMeters)}
                 onChange={(event) => onSearchRadiusMetersChange(milesToMeters(Number(event.target.value)))}
               />
-            </label>
+            </div>
           </div>
         </FilterPopover>
 
         <FilterPopover label={sortLabel(sortBy)}>
-          <select
-            className="h-9 w-full border border-border bg-background px-2 text-sm outline-none focus:border-primary"
+          <div className="space-y-2">
+            <Label>Sort by</Label>
+            <Select
             value={sortBy}
-            onChange={(event) => onSortByChange(event.target.value as SortBy)}
+              onValueChange={(value) => onSortByChange(value as SortBy)}
           >
-            <option value="fairest">Fairest</option>
-            <option value="fastest">Fastest average</option>
-            <option value="lowestMaxTime">Lowest max time</option>
-          </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fairest">Fairest</SelectItem>
+                <SelectItem value="fastest">Fastest average</SelectItem>
+                <SelectItem value="lowestMaxTime">Lowest max time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </FilterPopover>
 
-        <button
-          type="button"
-          className={`h-8 border px-3 text-xs font-medium ${
-            showMeetingArea ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"
-          }`}
-          onClick={() => onShowMeetingAreaChange(!showMeetingArea)}
-        >
-          Areas {showMeetingArea ? "on" : "off"}
-        </button>
+        <label className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm">
+          <MapPinned className="h-3.5 w-3.5" />
+          Areas
+          <Switch checked={showMeetingArea} onCheckedChange={onShowMeetingAreaChange} />
+        </label>
       </div>
     </section>
   );
 }
 
 function FilterPopover({ label, children }: { label: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function closeOnOutsideClick(event: MouseEvent) {
-      if (popoverRef.current?.contains(event.target as Node)) {
-        return;
-      }
-
-      setOpen(false);
-    }
-
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
-  }, []);
-
   return (
-    <div ref={popoverRef} className="relative">
-      <button
-        type="button"
-        className="h-8 border border-border bg-muted px-3 text-xs font-medium hover:border-primary hover:bg-primary/10"
-        onClick={() => setOpen((current) => !current)}
-      >
-        {label}
-      </button>
-      {open ? (
-        <div className="absolute left-0 top-full z-[1000] mt-1 w-52 border border-border bg-surface-elevated p-3 shadow-xl">
-          {children}
-        </div>
-      ) : null}
-    </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="h-8 bg-card text-xs">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          {label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56">
+        {children}
+      </PopoverContent>
+    </Popover>
   );
 }
 
